@@ -1,0 +1,11 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope">
+
+  <utility
+     factory=".manager.ResourceManagerFactory"
+     provides="zope.component.IFactory"
+     name="z3c.resourceinclude.ResourceManager"
+     />
+
+
+</configure>

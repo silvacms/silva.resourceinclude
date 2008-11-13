@@ -1,0 +1,7 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope">
+
+  <include package="z3c.resourceinclude" file="meta.zcml" />
+  <includeOverrides file="manager.zcml" />
+
+</configure>
