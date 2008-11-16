@@ -30,6 +30,6 @@ setup(name='silva.resourceinclude',
           'setuptools',
           'Products.Silva',
           'silva.core.views',
-          'z3c.resourceinclude',
+          'z3c.resourceinclude >= 0.3',
       ],
       )
