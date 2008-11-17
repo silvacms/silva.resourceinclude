@@ -1,3 +1,6 @@
+# Copyright (c) 2008 Infrae. All rights reserved.
+# See also LICENSE.txt
+# $Id$
 
 from zope.app.testing.placelesssetup import tearDown as _cleanUp
 def cleanUp():
