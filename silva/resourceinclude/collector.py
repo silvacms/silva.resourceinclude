@@ -22,7 +22,7 @@ from z3c.resourceinclude.interfaces import IResourceCollector
 from z3c.resourceinclude.interfaces import IResourceManager
 from zope.traversing.browser.interfaces import IAbsoluteURL
 
-from Products.Silva.interfaces import  IVirtualHosting
+from silva.core.views.interfaces import IVirtualSite
 
 import mimetypes
 import tempfile
@@ -48,7 +48,9 @@ class TemporaryResource(resource.FileResource):
     def __call__(self):
         name = self.__name__
         container = self.aq_parent.context
-        root = IVirtualHosting(container).getSilvaOrVirtualRoot()
+        virtual_site = component.getMultiAdapter(
+            (container, self.request,), IVirtualSite)
+        root = virtual_site.get_root()
         return "%s/++resource++%s" % (root.absolute_url(), name)
 
     def GET(self):
@@ -77,7 +79,8 @@ class TemporaryResource(resource.FileResource):
         t = time.time() + secs
         response.setHeader('Cache-Control', 'public,max-age=%s' % secs)
         response.setHeader(
-            'Expires', time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(t)))
+            'Expires',
+            time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(t)))
 
         f = self.__file
         f.seek(0)
@@ -95,6 +98,7 @@ class TemporaryResource(resource.FileResource):
 
 
 class TemporaryResourceFactory(object):
+
     def __init__(self, f, resource, content_type, name):
         self.__file = f
         self.__name = name
@@ -103,7 +107,8 @@ class TemporaryResourceFactory(object):
         self.lmt = time.time()
 
     def __call__(self, request):
-        resource = TemporaryResource(request, self.__file, self.content_type, self.lmt)
+        resource = TemporaryResource(
+            request, self.__file, self.content_type, self.lmt)
         resource.__name__ = self.__name
         resource.__parent__ = self.__parent
         return resource
@@ -146,7 +151,8 @@ class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
         parent = self.aq_parent
         by_type = {}
         for resource in resources:
-            by_type.setdefault(resource.context.content_type, []).append(resource)
+            by_type.setdefault(
+                resource.context.content_type, []).append(resource)
 
         del resources[:]
         merged = resources
@@ -171,7 +177,8 @@ class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
             res = component.queryAdapter((self.request,), name=name)
 
             if res is None:
-                factory = TemporaryResourceFactory(f, resource, content_type, name)
+                factory = TemporaryResourceFactory(
+                    f, resource, content_type, name)
 
                 # register factory
                 component.provideAdapter(

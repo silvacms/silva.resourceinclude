@@ -3,12 +3,10 @@
 # $Id$
 
 from z3c.resourceinclude import provider
-from silva.core.views import views
-from silva.core import conf as silvaconf
+from silva.core.views import views as silvaviews
 
-class ResourceIncludeProvider(provider.ResourceIncludeProvider, views.ContentProvider):
-
-    silvaconf.name('resources')
+class ResourceIncludeProvider(provider.ResourceIncludeProvider,
+                              silvaviews.ContentProvider):
 
     def update(self):
         super(ResourceIncludeProvider, self).update()

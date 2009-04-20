@@ -1,13 +1,19 @@
 <configure
    xmlns="http://namespaces.zope.org/zope"
-   xmlns:grok="http://namespaces.zope.org/grok">
+   xmlns:browser="http://namespaces.zope.org/browser">
 
-  <include package="z3c.pt" />
+  <include package="." file="meta.zcml" />
 
-  <adapter factory=".collector.ResourceCollector"
-           provides="z3c.resourceinclude.interfaces.IResourceCollector" />
+  <adapter
+     factory=".collector.ResourceCollector"
+     provides="z3c.resourceinclude.interfaces.IResourceCollector" />
+
+  <adapter
+     name="resources"
+     factory=".provider.ResourceIncludeProvider"
+     provides="zope.contentprovider.interfaces.IContentProvider"
+     />
 
   <include package="silva.core.views" />
-  <grok:grok package=".provider" />
 
 </configure>

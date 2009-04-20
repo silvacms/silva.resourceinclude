@@ -32,8 +32,7 @@ setup(name='silva.resourceinclude',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'Products.Silva',
           'silva.core.views',
-          'z3c.resourceinclude >= 0.3',
-      ],
+          'z3c.resourceinclude >= 0.3.1',
+          ],
       )
