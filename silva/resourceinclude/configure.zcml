@@ -1,6 +1,6 @@
 <configure
    xmlns="http://namespaces.zope.org/zope"
-   xmlns:browser="http://namespaces.zope.org/browser">
+   xmlns:grok="http://namespaces.zope.org/grok">
 
   <include package="." file="meta.zcml" />
 
@@ -14,6 +14,10 @@
      provides="zope.contentprovider.interfaces.IContentProvider"
      />
 
+  <include package="silva.core.conf" />
   <include package="silva.core.views" />
+
+  <!-- Grok the grokker -->
+  <grok:grok package=".martiansupport" />
 
 </configure>

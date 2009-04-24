@@ -32,7 +32,9 @@ setup(name='silva.resourceinclude',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'martian',
           'silva.core.views',
+          'silva.core.conf',
           'z3c.resourceinclude >= 0.3.1',
           ],
       )
