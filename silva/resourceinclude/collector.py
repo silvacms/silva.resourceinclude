@@ -29,29 +29,24 @@ import tempfile
 import sha
 import time
 import urllib
+import os.path
 
 import Globals
 
 class TemporaryResource(resource.FileResource):
     """A publishable file-based resource"""
 
-    def __init__(self, request, f, content_type, lmt):
+    def __init__(self, request, merged_file, content_type, lmt):
         self.request = request
-        self.__file = f
+        self.__file = merged_file
         self.content_type = content_type
         self.lmt = lmt
-        self.context = self
 
     def browserDefault(self, request):
         return self.__browser_default__(request)
 
     def __call__(self):
-        name = self.__name__
-        container = self.aq_parent.context
-        virtual_site = component.getMultiAdapter(
-            (container, self.request,), IVirtualSite)
-        root = virtual_site.get_root()
-        return "%s/++resource++%s" % (root.absolute_url(), name)
+        return self.__parent__.__call__()
 
     def GET(self):
         """Zope 2.
@@ -66,7 +61,7 @@ class TemporaryResource(resource.FileResource):
             try:    mod_since=long(timeFromDateTimeString(header))
             except: mod_since=None
             if mod_since is not None:
-                last_mod = long(lmt)
+                last_mode = long(self.lmt)
                 if last_mod > 0 and last_mod <= mod_since:
                     response.setStatus(304)
                     return ''
@@ -82,35 +77,90 @@ class TemporaryResource(resource.FileResource):
             'Expires',
             time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(t)))
 
-        f = self.__file
-        f.seek(0)
-        return f.read()
+        self.__file.seek(0)
+        return self.__file.read()
 
     def HEAD(self):
-        file = self.context
+        """Zope 2.
+        """
         response = self.request.response
         response.setHeader('Content-Type', self.content_type)
         response.setHeader('Last-Modified', self.lmt)
-        # Cache for one day
         response.setHeader('Cache-Control', 'public,max-age=31536000')
         return ''
 
 
+_marker = object()
+
+class TemporaryDirectoryResource(resource.DirectoryResource):
+
+    def __init__(self, context, request, merged_file,
+                 content_type, extension, path, lmt):
+        super(TemporaryDirectoryResource, self).__init__(context, request)
+        self.__file = merged_file
+        self.__merged_name = 'resource' + extension
+        self.__extension = extension
+        self.__path = path
+        self.content_type = content_type
+        self.lmt = lmt
+
+    def __call__(self):
+        name = self.__name__
+        container = self.__parent__
+        virtual_site = component.getMultiAdapter(
+            (container, self.request,), IVirtualSite)
+        root = virtual_site.get_root()
+        return "%s/++resource++%s/%s" % (
+            root.absolute_url(), name, self.__merged_name)
+
+    def get(self, name, default=_marker):
+        if name == self.__merged_name:
+            resource = TemporaryResource(
+                self.request, self.__file, self.content_type, self.lmt)
+            resource.__name__ = self.__merged_name
+        else:
+            filename = os.path.join(self.__path, name)
+            isfile = os.path.isfile(filename)
+            isdir = os.path.isdir(filename)
+
+            if not (isfile or isdir):
+                if default is _marker:
+                    raise KeyError(name)
+                return default
+
+            if isfile:
+                ext = name.split('.')[-1]
+                factory = self.resource_factories.get(ext, self.default_factory)
+            else:
+                factory = resource.DirectoryResourceFactory
+
+            resource = factory(name, filename)(self.request)
+            resource.__name__ = name
+        resource.__parent__ = self
+        # XXX __of__ wrapping is usually done on traversal.
+        # However, we don't want to subclass Traversable (or do we?)
+        # The right thing should probably be a specific (and very simple)
+        # traverser that does __getitem__ and __of__.
+        return resource.__of__(self)
+
 
 class TemporaryResourceFactory(object):
 
-    def __init__(self, f, resource, content_type, name):
-        self.__file = f
+    def __init__(self, context, merged_file, name, content_type, path):
+        self.__file = merged_file
         self.__name = name
-        self.__parent = resource.__parent__
+        self.__extension = mimetypes.guess_extension(content_type)
+        self.__path = path
+        self.context = context
         self.content_type = content_type
         self.lmt = time.time()
 
     def __call__(self, request):
-        resource = TemporaryResource(
-            request, self.__file, self.content_type, self.lmt)
+        resource = TemporaryDirectoryResource(
+            self.context, request, self.__file, self.content_type,
+            self.__extension, self.__path, self.lmt)
         resource.__name__ = self.__name
-        resource.__parent__ = self.__parent
+        resource.__parent__ = self.context
         return resource
 
 
@@ -123,6 +173,7 @@ class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
         parent = self.aq_parent
         return [(name, manager.__of__(parent)) for name, manager in \
                     super(ResourceCollector, self)._get_managers()]
+
     def collect(self):
         resources = []
         names = []
@@ -145,10 +196,10 @@ class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
 
 
     def merge(self, resources):
-        if Globals.DevelopmentMode:
-            return
+        #if Globals.DevelopmentMode:
+        #    return
 
-        parent = self.aq_parent
+        context = self.aq_parent.context
         by_type = {}
         for resource in resources:
             by_type.setdefault(
@@ -158,32 +209,44 @@ class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
         merged = resources
 
         for content_type, resources in by_type.items():
-            f = tempfile.TemporaryFile()
-
+            by_path = {}
+            previous_path = None
+            order_path = []
             for resource in resources:
-                resource_file = open(resource.context.path, 'rb')
-                print >> f, "/* %s */" % resource.__name__
-                f.write(resource_file.read())
-                print >> f, ""
-                resource_file.close()
+                base_path = '/'.join(resource.context.path.split('/')[:-1])
+                if previous_path != base_path:
+                    order_path.append(base_path)
+                by_path.setdefault(base_path, []).append(resource)
+                previous_path = base_path
 
-            # generate filename
-            ext = mimetypes.guess_extension(content_type)
-            f.seek(0)
-            digest = sha.new(f.read()).hexdigest()
-            name = digest + ext
+            for base_path in order_path:
+                resources = by_path[base_path]
+                merged_file = tempfile.TemporaryFile()
 
-            # check if resource is already registered
-            res = component.queryAdapter((self.request,), name=name)
+                for resource in resources:
+                    resource_file = open(resource.context.path, 'rb')
+                    print >> merged_file, "/* %s */" % resource.__name__
+                    merged_file.write(resource_file.read())
+                    print >> merged_file, ""
+                    resource_file.close()
 
-            if res is None:
-                factory = TemporaryResourceFactory(
-                    f, resource, content_type, name)
+                # generate filename
+                merged_file.seek(0)
+                digest = sha.new(merged_file.read()).hexdigest()
+                name = digest
 
-                # register factory
-                component.provideAdapter(
-                    factory, (IBrowserRequest,), interface.Interface, name=name)
+                # check if resource is already registered
+                existing_resource = component.queryAdapter(
+                    (self.request,), name=name)
 
-                res = factory(self.request)
+                if existing_resource is None:
+                    factory = TemporaryResourceFactory(
+                        context, merged_file, name, content_type, base_path)
 
-            merged.append(res.__of__(parent))
+                    # register factory
+                    component.provideAdapter(
+                        factory, (IBrowserRequest,), interface.Interface, name=name)
+
+                    existing_resource = factory(self.request)
+
+                merged.append(existing_resource.__of__(context))
