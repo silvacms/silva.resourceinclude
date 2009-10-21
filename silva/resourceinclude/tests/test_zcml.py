@@ -5,7 +5,7 @@
 import unittest
 from Testing import ZopeTestCase
 
-from five.resourceinclude.testing import ResourceIncludeLayer
+from silva.resourceinclude.testing import ResourceIncludeLayer
 
 class ResourceIncludeTest(ZopeTestCase.FunctionalTestCase):
 

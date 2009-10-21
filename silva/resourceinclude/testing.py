@@ -3,6 +3,7 @@
 # $Id$
 
 from zope.app.testing.placelesssetup import tearDown as _cleanUp
+
 def cleanUp():
     """Cleans up the component architecture.
     """
@@ -17,7 +18,8 @@ def setDebugMode(mode):
     import Products.Five.fiveconfigure as fc
     fc.debug_mode = mode
 
-import five.resourceinclude
+import silva.resourceinclude
+
 def loadSite():
     """Loads extension.
     """

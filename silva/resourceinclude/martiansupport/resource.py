@@ -16,6 +16,7 @@ from silva.core.conf.martiansupport import directives as silvaconf
 
 _marker = object()
 
+
 class ResourceIncludeGrokker(martian.InstanceGrokker):
     martian.component(InterfaceClass)
 
@@ -41,8 +42,7 @@ class ResourceIncludeGrokker(martian.InstanceGrokker):
             discriminator = ('resourceInclude', IBrowserRequest,
                              interface, "".join(resources)),
             callable = resourceHandler,
-            args = (resources, interface, None, None),
-            )
+            args = (resources, interface, None, None))
 
         return True
 
