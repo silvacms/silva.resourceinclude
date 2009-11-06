@@ -42,5 +42,6 @@ class ResourceIncludeLayer(ZopeLite):
 
     @classmethod
     def tearDown(self):
-        cleanUp()
+        #cleanUp()
+        pass
 
