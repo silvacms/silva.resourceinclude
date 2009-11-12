@@ -2,38 +2,30 @@
 # See also LICENSE.txt
 # $Id$
 
-from Products.Five.browser import resource
-from z3c.resourceinclude import collector
+# Zope 2
+from Products.Five.browser import resource as resource_support
 import Acquisition
-import time
+import Globals
 
-from zope import interface
-from zope import component
-
+# Zope 3
+from zope import interface, component
 from zope.publisher.interfaces.browser import IBrowserRequest
-from zope.publisher.interfaces.browser import IBrowserPublisher
-from zope.publisher.browser import TestRequest
-from zope.app.publisher.browser.resource import Resource
-from zope.publisher.interfaces import NotFound
 from zope.datetime import rfc1123_date
 from zope.datetime import time as timeFromDateTimeString
 
-from z3c.resourceinclude.interfaces import IResourceCollector
-from z3c.resourceinclude.interfaces import IResourceManager
-from zope.traversing.browser.interfaces import IAbsoluteURL
+# Zope 3 community
+from z3c.resourceinclude import collector
 
+# Silva
 from silva.core.views.interfaces import IVirtualSite
 
 import mimetypes
 import tempfile
 import sha
 import time
-import urllib
 import os.path
 
-import Globals
-
-class TemporaryResource(resource.FileResource):
+class TemporaryResource(resource_support.FileResource):
     """A publishable file-based resource"""
 
     def __init__(self, request, merged_file, content_type, lmt):
@@ -61,7 +53,7 @@ class TemporaryResource(resource.FileResource):
             try:    mod_since=long(timeFromDateTimeString(header))
             except: mod_since=None
             if mod_since is not None:
-                last_mode = long(self.lmt)
+                last_mod = long(self.lmt)
                 if last_mod > 0 and last_mod <= mod_since:
                     response.setStatus(304)
                     return ''
@@ -92,7 +84,7 @@ class TemporaryResource(resource.FileResource):
 
 _marker = object()
 
-class TemporaryDirectoryResource(resource.DirectoryResource):
+class TemporaryDirectoryResource(resource_support.DirectoryResource):
 
     def __init__(self, context, request, merged_file,
                  content_type, extension, path, lmt):
@@ -132,7 +124,7 @@ class TemporaryDirectoryResource(resource.DirectoryResource):
                 ext = name.split('.')[-1]
                 factory = self.resource_factories.get(ext, self.default_factory)
             else:
-                factory = resource.DirectoryResourceFactory
+                factory = resource_support.DirectoryResourceFactory
 
             resource = factory(name, filename)(self.request)
             resource.__name__ = name
