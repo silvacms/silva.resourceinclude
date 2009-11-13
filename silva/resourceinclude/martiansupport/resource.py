@@ -28,7 +28,8 @@ class ResourceIncludeGrokker(martian.InstanceGrokker):
 
         if not interface.extends(IDefaultBrowserLayer):
             raise GrokError(
-                """A resource can be included only on a layer.""")
+                """A resource can be included only on a layer.""",
+                interface)
 
         if module_info.isPackage():
             resource_dir = module_info.getModule().__name__
