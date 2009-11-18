@@ -1,10 +1,11 @@
 Changes
 =======
 
-1.0a2 (unreleased)
+1.0b1 (2009-11-18)
 ------------------
 
-* ...
+* Add the resource grokker.
+* Fix various bugs from the previous version.
 
 1.0a1 (2008-11-17)
 ------------------
