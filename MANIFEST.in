@@ -1,0 +1,5 @@
+recursive-include silva *.py *.zcml *.pt *.js *.css
+recursive-include docs *.txt
+include README.txt
+include buildout.cfg
+include bootstrap.py
