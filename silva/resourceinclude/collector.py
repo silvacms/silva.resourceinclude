@@ -188,6 +188,7 @@ class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
 
 
     def merge(self, resources):
+        return
         if Globals.DevelopmentMode:
             return
 
