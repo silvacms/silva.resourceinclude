@@ -19,12 +19,14 @@ from silva.core.views.interfaces import IVirtualSite
 from silva.resourceinclude.interfaces import IResourceCollector, \
     IResourceManager
 
-
 import mimetypes
 import tempfile
 import sha
 import time
 import os.path
+
+import threading
+lock = threading.Lock()
 
 
 class ResourcePage(BrowserPage,  Acquisition.Explicit):
@@ -208,9 +210,8 @@ class ResourceCollector(Acquisition.Implicit):
 
 
     def merge(self, resources):
-        #return
-        #if Globals.DevelopmentMode:
-        #    return
+        if Globals.DevelopmentMode:
+           return
 
         context = self.aq_parent.context
         by_type = {}
@@ -248,23 +249,27 @@ class ResourceCollector(Acquisition.Implicit):
                 digest = sha.new(merged_file.read()).hexdigest()
                 name = digest
 
-                # check if resource is already registered
-                existing_resource = component.queryAdapter(
-                    (self.request,), name=name)
+                lock.acquire()
+                try:
+                    # check if resource is already registered
+                    existing_resource = component.queryAdapter(
+                        (self.request,), name=name)
 
-                if existing_resource is None:
-                    resource = MergedResource(
-                        name, merged_file, content_type, base_path)
+                    if existing_resource is None:
+                        resource = MergedResource(
+                            name, merged_file, content_type, base_path)
 
-                    factory = MergedResourceFactory(resource)
-
-                    # register factory
-                    component.provideAdapter(
-                        factory,
-                        (IBrowserRequest,),
-                        interface.Interface,
-                        name=name)
-
-                    existing_resource = factory(self.request)
+                        factory = MergedResourceFactory(resource)
+                    
+                        # register factory
+                        component.provideAdapter(
+                            factory,
+                            (IBrowserRequest,),
+                            interface.Interface,
+                            name=name)
+                    
+                        existing_resource = factory(self.request)
+                finally:
+                    lock.release()
 
                 merged.append(existing_resource.__of__(context))
