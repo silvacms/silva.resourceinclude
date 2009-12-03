@@ -13,7 +13,7 @@
     
     If we adapts the request with the IResourceCollector we should
     get one.
-    >>> from z3c.resourceinclude.interfaces import IResourceCollector
+    >>> from silva.resourceinclude.interfaces import IResourceCollector
     >>> collector = IResourceCollector(request)
     >>> collector
     <silva.resourceinclude.collector.ResourceCollector object at ...>

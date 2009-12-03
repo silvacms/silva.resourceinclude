@@ -13,11 +13,11 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.datetime import rfc1123_date
 from zope.datetime import time as timeFromDateTimeString
 
-# Zope 3 community
-from z3c.resourceinclude import collector
-
 # Silva
 from silva.core.views.interfaces import IVirtualSite
+from silva.resourceinclude.interfaces import IResourceCollector, \
+    IResourceManager
+
 
 import mimetypes
 import tempfile
@@ -156,15 +156,28 @@ class TemporaryResourceFactory(object):
         return resource
 
 
-class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
+class ResourceCollector(Acquisition.Implicit):
+    interface.implements(IResourceCollector)
+    component.adapts(IBrowserRequest)
+
+    def __init__(self, request):
+        self.request = request
+
+    def sort(self, resources):
+        resources.sort(key=lambda resource: resource.context.content_type)
 
     def _get_request(self):
         return self.request
 
     def _get_managers(self):
         parent = self.aq_parent
-        return [(name, manager.__of__(parent)) for name, manager in \
-                    super(ResourceCollector, self)._get_managers()]
+        managers = [(name, manager.__of__(parent)) for name, manager in
+                    component.getAdapters((self.request,), IResourceManager)
+                    if manager.available()]
+
+        managers.sort(key=lambda (name, manager): name)
+        return managers
+
 
     def collect(self):
         resources = []
@@ -238,7 +251,10 @@ class ResourceCollector(collector.ResourceCollector, Acquisition.Implicit):
 
                     # register factory
                     component.provideAdapter(
-                        factory, (IBrowserRequest,), interface.Interface, name=name)
+                        factory,
+                        (IBrowserRequest,),
+                        interface.Interface,
+                        name=name)
 
                     existing_resource = factory(self.request)
 

@@ -1,7 +1,15 @@
 <configure
-    xmlns="http://namespaces.zope.org/zope">
+   xmlns="http://namespaces.zope.org/zope"
+   xmlns:meta="http://namespaces.zope.org/meta">
 
-  <include package="z3c.resourceinclude" file="meta.zcml" />
-  <includeOverrides file="manager.zcml" />
+  <meta:directives namespace="http://namespaces.zope.org/browser">
+
+    <meta:directive
+       name="resourceInclude"
+       schema=".zcml.IResourceIncludeDirective"
+       handler=".zcml.includeDirective"
+       />
+
+  </meta:directives>
 
 </configure>

@@ -6,7 +6,7 @@
 
   <adapter
      factory=".collector.ResourceCollector"
-     provides="z3c.resourceinclude.interfaces.IResourceCollector" />
+     provides="silva.resourceinclude.interfaces.IResourceCollector" />
 
   <adapter
      name="resources"

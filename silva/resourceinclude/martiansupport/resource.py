@@ -9,7 +9,7 @@ from zope.interface.interface import InterfaceClass
 from zope.publisher.interfaces.browser import IDefaultBrowserLayer, \
     IBrowserRequest
 
-from z3c.resourceinclude.zcml import handler as resourceHandler
+from silva.resourceinclude.zcml import handler as resourceHandler
 
 from silva.core.conf.martiansupport import directives as silvaconf
 
