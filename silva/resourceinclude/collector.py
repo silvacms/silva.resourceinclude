@@ -9,6 +9,7 @@ import Globals
 
 # Zope 3
 from zope import interface, component
+from zope.publisher.browser import BrowserPage
 from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.datetime import rfc1123_date
 from zope.datetime import time as timeFromDateTimeString
@@ -25,28 +26,21 @@ import sha
 import time
 import os.path
 
-class TemporaryResource(resource_support.FileResource):
-    """A publishable file-based resource"""
 
-    def __init__(self, request, merged_file, content_type, lmt):
-        self.request = request
-        self.__file = merged_file
-        self.content_type = content_type
-        self.lmt = lmt
+class MergedResourceDownloadView(BrowserPage, Acquisition.Explicit):
 
     def browserDefault(self, request):
-        return self.__browser_default__(request)
-
-    def __call__(self):
-        return self.__parent__.__call__()
+        if request.method in ('GET', 'HEAD'):
+            return self, (request.method,)
+        return super(MergedResourceDownloadView, self).browserDefault(request)
 
     def GET(self):
-        """Zope 2.
+        """Download the merged file
         """
-        lmt = self.lmt
+        lmt = self.context.lmt
 
         request = self.request
-        response = request.RESPONSE
+        response = self.request.response
         header = request.environ.get('If-Modified-Since', None)
         if header is not None:
             header = header.split(';')[0]
@@ -59,7 +53,7 @@ class TemporaryResource(resource_support.FileResource):
                     return ''
 
         # set response headers
-        response.setHeader('Content-Type', self.content_type)
+        response.setHeader('Content-Type', self.context.content_type)
         response.setHeader('Last-Modified', rfc1123_date(lmt))
 
         secs = 31536000 # one year - never expire
@@ -69,8 +63,7 @@ class TemporaryResource(resource_support.FileResource):
             'Expires',
             time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(t)))
 
-        self.__file.seek(0)
-        return self.__file.read()
+        return self.context.data()
 
     def HEAD(self):
         """Zope 2.
@@ -82,43 +75,49 @@ class TemporaryResource(resource_support.FileResource):
         return ''
 
 
-_marker = object()
+class MergedResource(object):
 
-class TemporaryDirectoryResource(resource_support.DirectoryResource):
-
-    def __init__(self, context, request, merged_file,
-                 content_type, extension, path, lmt):
-        super(TemporaryDirectoryResource, self).__init__(context, request)
-        self.__file = merged_file
-        self.__merged_name = 'resource' + extension
-        self.__extension = extension
-        self.__path = path
+    def __init__(self, name, file, content_type, path):
+        self.basename = name
+        self.__file = file
+        self.__extension = mimetypes.guess_extension(content_type)
+        self.filename = 'resource' + self.__extension
+        self.path = path
         self.content_type = content_type
-        self.lmt = lmt
+        self.lmt = time.time()
+
+    def data(self):
+        self.__file.seek(0)
+        return self.__file.read()
+
+
+class MergedResourceView(BrowserPage, Acquisition.Explicit):
+
+    resource_factories = {
+        'gif':  resource_support.ImageResourceFactory,
+        'png':  resource_support.ImageResourceFactory,
+        'jpg':  resource_support.ImageResourceFactory,
+        }
+    default_factory = resource_support.FileResourceFactory,
 
     def __call__(self):
-        name = self.__name__
-        container = self.__parent__
-        virtual_site = component.getMultiAdapter(
-            (container, self.request,), IVirtualSite)
-        root = virtual_site.get_root()
+        virtual_site = component.getAdapter(self.request, IVirtualSite)
         return "%s/++resource++%s/%s" % (
-            root.absolute_url(), name, self.__merged_name)
+            virtual_site.get_root_url(),
+            self.context.basename,
+            self.context.filename)
 
-    def get(self, name, default=_marker):
-        if name == self.__merged_name:
-            resource = TemporaryResource(
-                self.request, self.__file, self.content_type, self.lmt)
-            resource.__name__ = self.__merged_name
+    def publishTraverse(self, request, name):
+        if name == self.context.get_filename():
+            view = MergedResourceDownloadView(self.context, request)
         else:
-            filename = os.path.join(self.__path, name)
+            filename = os.path.join(self.context.path, name)
             isfile = os.path.isfile(filename)
             isdir = os.path.isdir(filename)
 
             if not (isfile or isdir):
-                if default is _marker:
-                    raise KeyError(name)
-                return default
+                return super(MergedResourceView, self).publishTraverse(
+                    request, name)
 
             if isfile:
                 ext = name.split('.')[-1]
@@ -126,34 +125,35 @@ class TemporaryDirectoryResource(resource_support.DirectoryResource):
             else:
                 factory = resource_support.DirectoryResourceFactory
 
-            resource = factory(name, filename)(self.request)
-            resource.__name__ = name
-        resource.__parent__ = self
-        # XXX __of__ wrapping is usually done on traversal.
-        # However, we don't want to subclass Traversable (or do we?)
-        # The right thing should probably be a specific (and very simple)
-        # traverser that does __getitem__ and __of__.
-        return resource.__of__(self)
+            view = factory(name, filename)(self.request)
+
+        return view
+
+    def browserDefault(self, request):
+        if request.method in ('GET', 'HEAD'):
+            return self, (request.method,)
+        return super(MergedResourceView, self).browserDefault(request)
 
 
-class TemporaryResourceFactory(object):
+    def GET(self):
+        """Return nothing when viewing the directory itself.
+        """
+        return ''
 
-    def __init__(self, context, merged_file, name, content_type, path):
-        self.__file = merged_file
-        self.__name = name
-        self.__extension = mimetypes.guess_extension(content_type)
-        self.__path = path
-        self.context = context
-        self.content_type = content_type
-        self.lmt = time.time()
+    def HEAD(self):
+        """Return nothing when viewing the directory itself.
+        """
+        return ''
+
+
+
+class MergedResourceFactory(object):
+
+    def __init__(self, resource):
+        self.__resource = resource
 
     def __call__(self, request):
-        resource = TemporaryDirectoryResource(
-            self.context, request, self.__file, self.content_type,
-            self.__extension, self.__path, self.lmt)
-        resource.__name__ = self.__name
-        resource.__parent__ = self.context
-        return resource
+        return MergedResourceView(self.__resource, request)
 
 
 class ResourceCollector(Acquisition.Implicit):
@@ -201,9 +201,9 @@ class ResourceCollector(Acquisition.Implicit):
 
 
     def merge(self, resources):
-        return
-        if Globals.DevelopmentMode:
-            return
+        #return
+        #if Globals.DevelopmentMode:
+        #    return
 
         context = self.aq_parent.context
         by_type = {}
@@ -246,8 +246,10 @@ class ResourceCollector(Acquisition.Implicit):
                     (self.request,), name=name)
 
                 if existing_resource is None:
-                    factory = TemporaryResourceFactory(
-                        context, merged_file, name, content_type, base_path)
+                    resource = MergedResource(
+                        name, merged_file, content_type, base_path)
+
+                    factory = MergedResourceFactory(resource)
 
                     # register factory
                     component.provideAdapter(
