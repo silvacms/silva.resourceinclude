@@ -2,22 +2,16 @@
 # See also LICENSE.txt
 # $Id$
 
-from silva.core.views import views as silvaviews
-
-from zope import interface
-from zope import component
-
+from zope import component, interface
 from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.publisher.interfaces.browser import IBrowserView
-from zope.contentprovider.interfaces import IContentProvider
 
+from silva.core.views import views as silvaviews
 from silva.resourceinclude.interfaces import IResourceCollector
 from chameleon.zpt.template import PageTemplateFile
 from plone.memoize import ram
 
 import os.path
-import time
-
 import mimetypes
 if not '.kss' in mimetypes.types_map:
     mimetypes.add_type('text/kss', '.kss')
