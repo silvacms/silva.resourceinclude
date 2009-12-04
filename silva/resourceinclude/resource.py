@@ -7,20 +7,26 @@ from Products.Five.browser import resource as resource_support
 import Acquisition
 
 # Zope 3
-from zope import component
+from five import grok
+from zope import interface, component
 from zope.publisher.browser import BrowserPage
+from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.datetime import rfc1123_date
 from zope.datetime import time as timeFromDateTimeString
 
 # Silva
 from silva.core.views.interfaces import IVirtualSite
+from silva.resourceinclude.interfaces import IResource
 
 import mimetypes
 import time
-import os.path
+import os
 
 
-class ResourcePage(BrowserPage,  Acquisition.Explicit):
+class ResourcePage(BrowserPage,  Acquisition.Explicit, grok.MultiAdapter):
+    grok.adapts(IResource, IBrowserRequest)
+    grok.baseclass()
+    grok.provides(interface.Interface)
 
     def browserDefault(self, request):
         # HEAD and GET request are managed by methods on the object
@@ -36,12 +42,19 @@ class ResourcePage(BrowserPage,  Acquisition.Explicit):
         return super(ResourcePage, self).publishTraverse(request, name)
 
 
-class MergedResourceDownloadView(ResourcePage):
+class ResourceView(ResourcePage):
     """View used to download the resource file.
     """
 
+    def __call__(self):
+        virtual_site = component.getAdapter(self.request, IVirtualSite)
+        return "%s/++resource++%s/%s" % (
+            virtual_site.get_root_url(),
+            self.context.basename,
+            self.context.filename)
+
     def GET(self):
-        """Download the merged file
+        """Download resource.
         """
         response = self.request.response
         header = self.request.environ.get('HTTP_IF_MODIFIED_SINCE', None)
@@ -80,9 +93,68 @@ class MergedResourceDownloadView(ResourcePage):
         return ''
 
 
+class FileResource(object):
+    """A resource representing a file on the FS.
+    """
+    grok.implements(IResource)
+
+    def __init__(self, name, path):
+        self.filename = name
+        self.path = path
+        self.__file = open(path, 'r')
+        self.content_type = mimetypes.guess_extension(path)[0]
+        self.lmt = os.stat(path)[8]
+
+    def data(self):
+        self.__file.seek(0)
+        return self.__file.read()
+
+
+class DirectoryResource(object):
+    """A resource representing a directory on the FS.
+    """
+    grok.implements(IResource)
+
+    def __init__(self, name, path):
+        self.filename = name
+        self.path = path
+        self.content_type = None
+        self.lmt = os.stat(path)[8]
+
+    def data(self):
+        return ''
+
+
+class DirectoryResourceView(ResourceView):
+    """View on a merged resource: give access to the directory where
+    all the merged resources where, or download the resource itself.
+    """
+    grok.adapts(DirectoryResource, IBrowserRequest)
+
+    def resource(self, name):
+        path = os.path.join(self.context.path, name)
+        isfile = os.path.isfile(path)
+        isdir = os.path.isdir(path)
+
+        if not (isfile or isdir):
+            return super(DirectoryResourceView, self).publishTraverse(
+                request, name)
+
+        if isfile:
+            factory = FileResource
+        else:
+            factory = DirectoryResource
+        return factory(name, path)
+
+    def publishTraverse(self, request, name):
+        resource = self.get_resource(name)
+        return component.getMultiAdapter((resource, request,), Interface)
+
+
 class MergedResource(object):
     """Represent a merged resource.
     """
+    grok.implements(IResource)
 
     def __init__(self, name, file, content_type, path):
         self.basename = name
@@ -98,62 +170,39 @@ class MergedResource(object):
         return self.__file.read()
 
 
-class MergedResourceView(ResourcePage):
+class MergedDirectoryResource(DirectoryResource):
+    """Report a directory containing a merged resource.
+    """
+    grok.implements(IResource)
+
+    def __init__(self, merged_resource):
+        self.resource = merged_resource
+
+    def __getattr__(self, key):
+        if not key in self.__dict__:
+            return getattr(self.resource, key)
+        return super(MergedDirectoryResource, self).__getattr__(key)
+
+
+class MergedDirectoryResourceView(DirectoryResourceView):
     """View on a merged resource: give access to the directory where
     all the merged resources where, or download the resource itself.
     """
+    grok.adapts(MergedDirectoryResource, IBrowserRequest)
 
-    resource_factories = {
-        'gif':  resource_support.ImageResourceFactory,
-        'png':  resource_support.ImageResourceFactory,
-        'jpg':  resource_support.ImageResourceFactory,
-        }
-    default_factory = resource_support.FileResourceFactory,
-
-    def __call__(self):
-        virtual_site = component.getAdapter(self.request, IVirtualSite)
-        return "%s/++resource++%s/%s" % (
-            virtual_site.get_root_url(),
-            self.context.basename,
-            self.context.filename)
-
-    def publishTraverse(self, request, name):
+    def resource(self, name):
         if name == self.context.filename:
-            return MergedResourceDownloadView(self.context, request)
-
-        filename = os.path.join(self.context.path, name)
-        isfile = os.path.isfile(filename)
-        isdir = os.path.isdir(filename)
-
-        if not (isfile or isdir):
-            return super(MergedResourceView, self).publishTraverse(
-                request, name)
-
-        if isfile:
-            ext = name.split('.')[-1]
-            factory = self.resource_factories.get(ext, self.default_factory)
-        else:
-            factory = resource_support.DirectoryResourceFactory
-        return factory(name, filename)(self.request)
-
-    def GET(self):
-        """Return nothing when viewing the directory itself.
-        """
-        return ''
-
-    def HEAD(self):
-        """Return nothing when viewing the directory itself.
-        """
-        return ''
+            return self.context.resource
+        return super(MergedDirectoryResourceView, self).get_resource(name)
 
 
-
-class MergedResourceFactory(object):
-    """View resource factory for merged resource.
+class ResourceFactory(object):
+    """Resource factory.
     """
 
     def __init__(self, resource):
         self.__resource = resource
 
     def __call__(self, request):
-        return MergedResourceView(self.__resource, request)
+        return component.getMultiAdapter(
+            (self.__resource, request,), Interface)
