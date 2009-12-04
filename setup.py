@@ -39,5 +39,6 @@ setup(name='silva.resourceinclude',
           'zope.app.cache',
           'zope.contentprovider',
           'chameleon.zpt',
+          'plone.memoize',
           ],
       )

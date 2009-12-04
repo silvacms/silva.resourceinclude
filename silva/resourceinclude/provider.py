@@ -13,8 +13,10 @@ from zope.contentprovider.interfaces import IContentProvider
 
 from silva.resourceinclude.interfaces import IResourceCollector
 from chameleon.zpt.template import PageTemplateFile
+from plone.memoize import ram
 
 import os.path
+import time
 
 import mimetypes
 if not '.kss' in mimetypes.types_map:
@@ -27,6 +29,11 @@ def guess_mimetype(resource):
 
 def local_file(filename):
     return os.path.join(os.path.dirname(__file__), filename)
+
+
+def _render_cachekey(method, obj):
+    return tuple(map(lambda i: i.__identifier__,
+                     obj.request.__provides__.interfaces()))
 
 
 class ResourceIncludeProvider(silvaviews.ContentProvider):
@@ -43,8 +50,8 @@ class ResourceIncludeProvider(silvaviews.ContentProvider):
     def update(self):
         self.collector = IResourceCollector(self.request).__of__(self.context)
 
+    @ram.cache(_render_cachekey)
     def render(self):
-        # XXXXX add a cache
         resources = [{'content_type': guess_mimetype(resource),
                       'url': resource()} for \
                      resource in self.collector.collect()]

@@ -53,7 +53,7 @@ class MergedResourceDownloadView(ResourcePage):
         """Download the merged file
         """
         response = self.request.response
-        header = self.request.environ.get('If-Modified-Since', None)
+        header = self.request.environ.get('HTTP_IF_MODIFIED_SINCE', None)
         if header is not None:
             header = header.split(';')[0]
             try:
@@ -260,14 +260,14 @@ class ResourceCollector(Acquisition.Implicit):
                             name, merged_file, content_type, base_path)
 
                         factory = MergedResourceFactory(resource)
-                    
+
                         # register factory
                         component.provideAdapter(
                             factory,
                             (IBrowserRequest,),
                             interface.Interface,
                             name=name)
-                    
+
                         existing_resource = factory(self.request)
                 finally:
                     lock.release()
