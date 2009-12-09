@@ -1,10 +1,13 @@
 Changes
 =======
 
-1.0 (unreleased)
-----------------
+1.0b2 (2009-12-09)
+------------------
 
-* ...
+* Refactor merged resources code.
+* Fix a thread safe issue.
+* Don't depend anymore on z3c.resourceinclude.
+* Improve caching.
 
 1.0b1 (2009-11-18)
 ------------------
