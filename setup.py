@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0dev'
+version = '1.0b2dev'
 
 setup(name='silva.resourceinclude',
       version=version,
