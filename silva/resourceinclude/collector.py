@@ -143,7 +143,9 @@ class MergedResourceView(ResourcePage):
             factory = self.resource_factories.get(ext, self.default_factory)
         else:
             factory = resource_support.DirectoryResourceFactory
-        return factory(name, filename)(self.request)
+        next_resource = factory(name, filename)(self.request)
+        next_resource.__name__ = name
+        return next_resource
 
     def GET(self):
         """Return nothing when viewing the directory itself.
@@ -210,8 +212,8 @@ class ResourceCollector(Acquisition.Implicit):
 
 
     def merge(self, resources):
-        if Globals.DevelopmentMode:
-           return
+        #if Globals.DevelopmentMode:
+        #   return
 
         context = self.aq_parent.context
         by_type = {}
