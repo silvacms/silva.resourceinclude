@@ -212,8 +212,8 @@ class ResourceCollector(Acquisition.Implicit):
 
 
     def merge(self, resources):
-        #if Globals.DevelopmentMode:
-        #   return
+        if Globals.DevelopmentMode:
+           return
 
         context = self.aq_parent.context
         by_type = {}
