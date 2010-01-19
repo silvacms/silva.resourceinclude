@@ -1,10 +1,11 @@
 Changes
 =======
 
-1.0 (unreleased)
+1.0 (2010-01-19)
 ----------------
 
-* ...
+* Add a __name__ attribute to support regular Zope
+  resources mixed with compressed ones.
 
 1.0b2 (2009-12-09)
 ------------------
