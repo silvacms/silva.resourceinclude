@@ -4,7 +4,7 @@
 
   <include package="." file="meta.zcml" />
 
-  <include package="silva.core.conf" />
+  <include package="five.grok" />
   <include package="silva.core.views" />
 
   <!-- Grok the package (and the grokker) -->
