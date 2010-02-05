@@ -6,7 +6,7 @@ from zope.publisher.interfaces.browser import IDefaultBrowserLayer
 from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.schema import TextLine
 
-from silva.resourceinclude.manager import ResourceManager
+from silva.resourceinclude.manager import ResourceManagerFactory
 from silva.resourceinclude.interfaces import IResourceManager
 
 managers = {}
@@ -27,25 +27,29 @@ class IResourceIncludeDirective(interface.Interface):
         description=u"""
         For information on layers, see the documentation for the skin
         directive. Defaults to "default".""",
-        required=False
-        )
+        required=False)
 
     manager = GlobalObject(
         title=u"Include manager",
         required=False)
 
-def includeDirective(_context, include, base=u"", layer=IDefaultBrowserLayer, manager=None):
+
+def includeDirective(_context, include,
+                     base=u"",
+                     layer=IDefaultBrowserLayer,
+                     manager=None):
     if base:
         include = [base+'/'+name for name in include]
 
     _context.action(
         discriminator = ('resourceInclude', IBrowserRequest, layer, "".join(include)),
         callable = handler,
-        args = (include, layer, manager, _context.info),
-        )
+        args = (include, layer, manager, _context.info),)
+
 
 def handler(include, layer, manager, info):
-    """Set up includes."""
+    """Set up includes.
+    """
 
     global managers
 
@@ -64,7 +68,7 @@ def handler(include, layer, manager, info):
 
         if manager is None:
             # create new resource manager
-            managers[key] = manager = ResourceManager()
+            managers[key] = manager = ResourceManagerFactory()
 
             # maintain order by creating a name that corresponds to
             # the current number of resource managers

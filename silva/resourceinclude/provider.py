@@ -2,6 +2,7 @@
 # See also LICENSE.txt
 # $Id$
 
+from five import grok
 from zope import component, interface
 from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.publisher.interfaces.browser import IBrowserView
@@ -31,23 +32,19 @@ def _render_cachekey(method, obj):
 
 
 class ResourceIncludeProvider(silvaviews.ContentProvider):
-    component.adapts(interface.Interface, IBrowserRequest, IBrowserView)
+    grok.adapts(interface.Interface, IBrowserRequest, IBrowserView)
+    grok.name('resources')
 
     template = PageTemplateFile(local_file("provider.pt"))
 
-    def __init__(self, context, request, view):
-        self.context = context
-        self.request = request
-        self.__parent__ = view
-
-
     def update(self):
-        self.collector = IResourceCollector(self.request).__of__(self.context)
+        self.collector = component.getMultiAdapter(
+            (self.context, self.request), IResourceCollector)
 
     @ram.cache(_render_cachekey)
     def render(self):
-        resources = [{'content_type': guess_mimetype(resource),
-                      'url': resource()} for \
-                     resource in self.collector.collect()]
+        resources = [
+            {'content_type': guess_mimetype(resource), 'url': resource()} for
+            resource in self.collector.collect()]
 
         return self.template(resources=resources)

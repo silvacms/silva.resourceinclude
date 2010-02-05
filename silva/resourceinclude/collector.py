@@ -3,55 +3,50 @@
 # $Id$
 
 # Zope 2
-import Acquisition
-import Globals
+from App.config import getConfiguration
 
 # Zope 3
+from five import grok
 from zope import interface, component
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 # Silva
-from silva.resourceinclude.resource import MergedResource, \
-    MergedResourceFactory
-from silva.resourceinclude.interfaces import IResourceCollector, \
-    IResourceManager
+from silva.resourceinclude.resource import \
+    MergedResource, MergedDirectoryResource, ResourceFactory
+from silva.resourceinclude.interfaces import \
+    IResourceCollector, IResourceManager
 
 import tempfile
-import sha
+import hashlib
 import threading
 
 lock = threading.Lock()
 
 
+class ResourceCollector(grok.MultiAdapter):
+    grok.implements(IResourceCollector)
+    grok.provides(IResourceCollector)
+    grok.adapts(interface.Interface, IBrowserRequest)
 
-class ResourceCollector(Acquisition.Implicit):
-    interface.implements(IResourceCollector)
-    component.adapts(IBrowserRequest)
-
-    def __init__(self, request):
+    def __init__(self, context, request):
+        self.context = context
         self.request = request
 
     def sort(self, resources):
         resources.sort(key=lambda resource: resource.context.content_type)
 
-    def _get_managers(self):
-        parent = self.aq_parent
-        managers = [(name, manager.__of__(parent)) for name, manager in
-                    component.getAdapters((self.request,), IResourceManager)
-                    if manager.available()]
-
+    def get_managers(self):
+        managers = [(name, manager) for name, manager in
+                    component.getAdapters((self.request,), IResourceManager)]
         managers.sort(key=lambda (name, manager): name)
         return managers
-
 
     def collect(self):
         resources = []
         names = []
 
-        request = self.request
-
-        for name, manager in self._get_managers():
-            items = manager.getResources(request)
+        for name, manager in self.get_managers():
+            items = manager.get_resources()
 
             # filter out duplicates
             rs = [resource for name, resource in items if name not in names]
@@ -64,12 +59,10 @@ class ResourceCollector(Acquisition.Implicit):
         self.merge(resources)
         return tuple(resources)
 
-
     def merge(self, resources):
-        if Globals.DevelopmentMode:
+        if getConfiguration().debug_mode:
            return
 
-        context = self.aq_parent.context
         by_type = {}
         for resource in resources:
             by_type.setdefault(
@@ -102,7 +95,7 @@ class ResourceCollector(Acquisition.Implicit):
 
                 # generate filename
                 merged_file.seek(0)
-                digest = sha.new(merged_file.read()).hexdigest()
+                digest = hashlib.sha1(merged_file.read()).hexdigest()
                 name = digest
 
                 lock.acquire()
@@ -112,10 +105,11 @@ class ResourceCollector(Acquisition.Implicit):
                         (self.request,), name=name)
 
                     if existing_resource is None:
-                        resource = MergedResource(
-                            name, merged_file, content_type, base_path)
+                        resource = MergedDirectoryResource(
+                            name, base_path,
+                            MergedResource(merged_file, content_type))
 
-                        factory = MergedResourceFactory(resource)
+                        factory = ResourceFactory(resource)
 
                         # register factory
                         component.provideAdapter(
@@ -128,4 +122,4 @@ class ResourceCollector(Acquisition.Implicit):
                 finally:
                     lock.release()
 
-                merged.append(existing_resource.__of__(context))
+                merged.append(existing_resource)

@@ -4,20 +4,10 @@
 
   <include package="." file="meta.zcml" />
 
-  <adapter
-     factory=".collector.ResourceCollector"
-     provides="silva.resourceinclude.interfaces.IResourceCollector" />
-
-  <adapter
-     name="resources"
-     factory=".provider.ResourceIncludeProvider"
-     provides="zope.contentprovider.interfaces.IContentProvider"
-     />
-
   <include package="silva.core.conf" />
   <include package="silva.core.views" />
 
-  <!-- Grok the grokker -->
-  <grok:grok package=".martiansupport" />
+  <!-- Grok the package (and the grokker) -->
+  <grok:grok package="." />
 
 </configure>

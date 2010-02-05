@@ -2,10 +2,6 @@
 # See also LICENSE.txt
 # $Id$
 
-# Zope 2
-from Products.Five.browser import resource as resource_support
-import Acquisition
-
 # Zope 3
 from five import grok
 from zope import interface, component
@@ -23,38 +19,50 @@ import time
 import os
 
 
-class ResourcePage(BrowserPage,  Acquisition.Explicit, grok.MultiAdapter):
+class ResourceView(BrowserPage, grok.MultiAdapter):
+    """View used to download the resource file.
+    """
     grok.adapts(IResource, IBrowserRequest)
-    grok.baseclass()
     grok.provides(interface.Interface)
 
     def browserDefault(self, request):
         # HEAD and GET request are managed by methods on the object
         if request.method in ('GET', 'HEAD'):
             return self, (request.method,)
-        return super(ResourcePage, self).browserDefault(request)
+        return super(ResourceView, self).browserDefault(request)
 
     def publishTraverse(self, request, name):
-        # Let people traverse to method who have the same name that
-        # method name
+        # Traverse to methods GET and HEAD
         if request.method == name and hasattr(self, name):
             return getattr(self, name)
-        return super(ResourcePage, self).publishTraverse(request, name)
+        # Traverse to sub-resources
+        try:
+            resource = self.context[name]
+        except KeyError:
+            # No sub-resources, default to default behavior
+            return super(ResourceView, self).publishTraverse(request, name)
+        return component.getMultiAdapter(
+            (resource, request,), interface.Interface)
 
-
-class ResourceView(ResourcePage):
-    """View used to download the resource file.
-    """
+    def get_relative_path(self):
+        """Return the relative path of the resource.
+        """
+        resource = self.context
+        resource_path = [resource.filename,]
+        while hasattr(resource, '__parent__'):
+            resource = resource.__parent__
+            resource_path.append(resource.filename)
+        return resource_path
 
     def __call__(self):
+        """Compute resource URL.
+        """
         virtual_site = component.getAdapter(self.request, IVirtualSite)
-        return "%s/++resource++%s/%s" % (
-            virtual_site.get_root_url(),
-            self.context.basename,
-            self.context.filename)
+        return "%s/++resource++%s" % (
+            virtual_site.get_root_url(), '/'.join(self.get_relative_path()))
 
     def GET(self):
-        """Download resource.
+        """Download resources.
         """
         response = self.request.response
         header = self.request.environ.get('HTTP_IF_MODIFIED_SINCE', None)
@@ -94,7 +102,7 @@ class ResourceView(ResourcePage):
 
 
 class FileResource(object):
-    """A resource representing a file on the FS.
+    """A resource representing a file on the file system.
     """
     grok.implements(IResource)
 
@@ -102,8 +110,11 @@ class FileResource(object):
         self.filename = name
         self.path = path
         self.__file = open(path, 'r')
-        self.content_type = mimetypes.guess_extension(path)[0]
+        self.content_type = mimetypes.guess_type(path)[0]
         self.lmt = os.stat(path)[8]
+
+    def __getitem__(self, name):
+        raise KeyError(name)
 
     def data(self):
         self.__file.seek(0)
@@ -111,7 +122,7 @@ class FileResource(object):
 
 
 class DirectoryResource(object):
-    """A resource representing a directory on the FS.
+    """A resource representing a directory on the file system.
     """
     grok.implements(IResource)
 
@@ -121,34 +132,24 @@ class DirectoryResource(object):
         self.content_type = None
         self.lmt = os.stat(path)[8]
 
-    def data(self):
-        return ''
-
-
-class DirectoryResourceView(ResourceView):
-    """View on a merged resource: give access to the directory where
-    all the merged resources where, or download the resource itself.
-    """
-    grok.adapts(DirectoryResource, IBrowserRequest)
-
-    def resource(self, name):
-        path = os.path.join(self.context.path, name)
+    def __getitem__(self, name):
+        path = os.path.join(self.path, name)
         isfile = os.path.isfile(path)
         isdir = os.path.isdir(path)
 
         if not (isfile or isdir):
-            return super(DirectoryResourceView, self).publishTraverse(
-                request, name)
+            raise KeyError(name)
 
         if isfile:
             factory = FileResource
         else:
             factory = DirectoryResource
-        return factory(name, path)
+        resource = factory(name, path)
+        resource.__parent__ = self
+        return resource
 
-    def publishTraverse(self, request, name):
-        resource = self.get_resource(name)
-        return component.getMultiAdapter((resource, request,), Interface)
+    def data(self):
+        return ''
 
 
 class MergedResource(object):
@@ -156,12 +157,11 @@ class MergedResource(object):
     """
     grok.implements(IResource)
 
-    def __init__(self, name, file, content_type, path):
-        self.basename = name
-        self.__file = file
+    def __init__(self, merged_file, content_type):
+        self.__file = merged_file
         self.__extension = mimetypes.guess_extension(content_type)
         self.filename = 'resource' + self.__extension
-        self.path = path
+        self.path = None
         self.content_type = content_type
         self.lmt = time.time()
 
@@ -175,25 +175,29 @@ class MergedDirectoryResource(DirectoryResource):
     """
     grok.implements(IResource)
 
-    def __init__(self, merged_resource):
+    def __init__(self, name, path, merged_resource):
         self.resource = merged_resource
+        self.resource.__parent__ = self
+        self.filename = name
+        self.path = path
+        self.content_type = self.resource.content_type
+        self.lmt = time.time()
 
-    def __getattr__(self, key):
-        if not key in self.__dict__:
-            return getattr(self.resource, key)
-        return super(MergedDirectoryResource, self).__getattr__(key)
+    def __getitem__(self, name):
+        if name == self.resource.filename:
+            return self.resource
+        return super(MergedDirectoryResource, self).__getitem__(name)
 
 
-class MergedDirectoryResourceView(DirectoryResourceView):
-    """View on a merged resource: give access to the directory where
-    all the merged resources where, or download the resource itself.
+class MergedDirectoryResourceView(ResourceView):
+    """View used to access a merged resource.
     """
     grok.adapts(MergedDirectoryResource, IBrowserRequest)
 
-    def resource(self, name):
-        if name == self.context.filename:
-            return self.context.resource
-        return super(MergedDirectoryResourceView, self).get_resource(name)
+    def get_relative_path(self):
+        path = super(MergedDirectoryResourceView, self).get_relative_path()
+        path.append(self.context.resource.filename)
+        return path
 
 
 class ResourceFactory(object):
@@ -205,4 +209,4 @@ class ResourceFactory(object):
 
     def __call__(self, request):
         return component.getMultiAdapter(
-            (self.__resource, request,), Interface)
+            (self.__resource, request,), interface.Interface)
