@@ -3,7 +3,7 @@
 # $Id$
 
 # Zope 2
-from App.config import getConfiguration
+import Globals
 
 # Zope 3
 from five import grok
@@ -60,7 +60,7 @@ class ResourceCollector(grok.MultiAdapter):
         return tuple(resources)
 
     def merge(self, resources):
-        if getConfiguration().debug_mode:
+        if Globals.DevelopmentMode:
            return
 
         by_type = {}
