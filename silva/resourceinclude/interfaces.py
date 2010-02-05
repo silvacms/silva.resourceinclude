@@ -17,6 +17,14 @@ class IResource(interface.Interface):
     lmt = interface.Attribute(
         "Last modification time for the resource")
 
+    def __getitem__(name):
+        """Return sub-resource packaged in that one.
+        """
+
+    def data():
+        """Return data to send to the client.
+        """
+
 
 class IResourceCollector(interface.Interface):
     """A resource collector is responsible for gathering resources
@@ -43,10 +51,11 @@ class IResourceManager(interface.Interface):
     names = interface.Attribute(
         "Names of the resources that are registered with this manager.")
 
-    def add(name):
-        """Adds a resource to the manager.
+    def get_resources():
+        """Return resources of the manager.
         """
 
-    def available():
-        """Returns a boolean value whether this manager is available.
+    def search_resource(name):
+        """Look for the given resource.
         """
+

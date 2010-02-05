@@ -18,10 +18,6 @@ if not '.kss' in mimetypes.types_map:
     mimetypes.add_type('text/kss', '.kss')
 
 
-def guess_mimetype(resource):
-    return resource.context.content_type
-
-
 def local_file(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
@@ -44,7 +40,8 @@ class ResourceIncludeProvider(silvaviews.ContentProvider):
     @ram.cache(_render_cachekey)
     def render(self):
         resources = [
-            {'content_type': guess_mimetype(resource), 'url': resource()} for
+            {'content_type': resource.context.content_type,
+             'url': resource()} for
             resource in self.collector.collect()]
 
         return self.template(resources=resources)

@@ -5,10 +5,10 @@
 # Zope 3
 from five import grok
 from zope import interface, component
-from zope.publisher.browser import BrowserPage
-from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.datetime import rfc1123_date
 from zope.datetime import time as timeFromDateTimeString
+from zope.publisher.browser import BrowserPage
+from zope.publisher.interfaces.browser import IBrowserRequest
 
 # Silva
 from silva.core.views.interfaces import IVirtualSite
@@ -109,7 +109,6 @@ class FileResource(object):
     def __init__(self, name, path):
         self.filename = name
         self.path = path
-        self.__file = open(path, 'r')
         self.content_type = mimetypes.guess_type(path)[0]
         self.lmt = os.stat(path)[8]
 
@@ -117,8 +116,9 @@ class FileResource(object):
         raise KeyError(name)
 
     def data(self):
-        self.__file.seek(0)
-        return self.__file.read()
+        file = open(path, 'r')
+        data = file.read()
+        return data
 
 
 class DirectoryResource(object):
@@ -149,7 +149,7 @@ class DirectoryResource(object):
         return resource
 
     def data(self):
-        return ''
+        return u''
 
 
 class MergedResource(object):
