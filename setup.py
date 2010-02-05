@@ -5,14 +5,13 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0b2dev'
+version = '1.1dev'
 
 setup(name='silva.resourceinclude',
       version=version,
       description="z3c.resourceinclude support for Silva",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
-      # Get more strings from http://www.python.org/pypi?:action=list_classifiers
       classifiers=[
           "Environment :: Web Environment",
           "Intended Audience :: Developers",
