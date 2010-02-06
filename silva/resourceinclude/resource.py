@@ -18,6 +18,8 @@ import mimetypes
 import time
 import os
 
+CACHE_TIME = 31536000 # one year - never expire
+
 
 class ResourceView(BrowserPage, grok.MultiAdapter):
     """View used to download the resource file.
@@ -45,7 +47,8 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
             (resource, request,), interface.Interface)
 
     def get_relative_path(self):
-        """Return the relative path of the resource.
+        """Return the relative path of the resource from the begining
+        of the resource tree.
         """
         resource = self.context
         resource_path = [resource.filename,]
@@ -58,13 +61,23 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
         """Compute resource URL.
         """
         virtual_site = component.getAdapter(self.request, IVirtualSite)
-        return "%s/++resource++%s" % (
-            virtual_site.get_root_url(), '/'.join(self.get_relative_path()))
+        return u"%s/++resource++%s" % (
+            virtual_site.get_root_url(), u'/'.join(self.get_relative_path()))
 
-    def GET(self):
-        """Download resources.
+    def __set_http_headers(self):
+        """Set HTTP headers on the reply.
         """
         response = self.request.response
+        expires = time.time() + CACHE_TIME
+        # set response headers
+        response.setHeader('Content-Type', self.context.content_type)
+        response.setHeader('Cache-Control', 'public,max-age=%s' % CACHE_TIME)
+        response.setHeader('Last-Modified', rfc1123_date(self.context.lmt))
+        response.setHeader('Expires', rfc1123_date(expires))
+
+    def GET(self):
+        """Download the resource if it have been modified.
+        """
         header = self.request.environ.get('HTTP_IF_MODIFIED_SINCE', None)
         if header is not None:
             header = header.split(';')[0]
@@ -75,30 +88,17 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
             if mod_since is not None:
                 last_mod = long(self.context.lmt)
                 if last_mod > 0 and last_mod <= mod_since:
-                    response.setStatus(304)
-                    return ''
+                    self.request.response.setStatus(304)
+                    return u''
 
-        # set response headers
-        response.setHeader('Content-Type', self.context.content_type)
-        response.setHeader('Last-Modified', rfc1123_date(self.context.lmt))
-
-        secs = 31536000 # one year - never expire
-        t = time.time() + secs
-        response.setHeader('Cache-Control', 'public,max-age=%s' % secs)
-        response.setHeader(
-            'Expires',
-            time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(t)))
-
+        self.__set_http_headers()
         return self.context.data()
 
     def HEAD(self):
-        """Give cache information about the merged file
+        """Give information about the resource.
         """
-        response = self.request.response
-        response.setHeader('Content-Type', self.context.content_type)
-        response.setHeader('Last-Modified', rfc1123_date(self.context.lmt))
-        response.setHeader('Cache-Control', 'public,max-age=31536000')
-        return ''
+        self.__set_http_headers()
+        return u''
 
 
 class FileResource(object):
@@ -118,11 +118,13 @@ class FileResource(object):
     def data(self):
         file = open(path, 'r')
         data = file.read()
+        file.close()
         return data
 
 
 class DirectoryResource(object):
-    """A resource representing a directory on the file system.
+    """A resource representing a directory on the file system. You can
+    access subdirectories and files as resources.
     """
     grok.implements(IResource)
 
@@ -201,7 +203,8 @@ class MergedDirectoryResourceView(ResourceView):
 
 
 class ResourceFactory(object):
-    """Resource factory.
+    """Resource factory. We are not returning the resource itself, but
+    a view on it.
     """
 
     def __init__(self, resource):
