@@ -43,7 +43,9 @@ def suiteFromPackage(name):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(suiteFromPackage('resources'))
+    suite.addTest(suiteFromPackage('collector'))
+    suite.addTest(suiteFromPackage('directive'))
+    suite.addTest(suiteFromPackage('resource'))
     return suite
 
 if __name__ == '__main__':
