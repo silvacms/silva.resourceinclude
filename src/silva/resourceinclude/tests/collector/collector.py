@@ -3,7 +3,7 @@
 # $Id$
 """
     First we need to grok our test and the test resources:
-    >>> grok('silva.resourceinclude.tests.resources')
+    >>> grok('silva.resourceinclude.tests.collector')
 
     We need a test request:
     >>> from zope.publisher.browser import TestRequest
@@ -26,7 +26,7 @@
     ()
 
     Now let's get a request which use our test layer:
-    >>> from silva.resourceinclude.tests.resources.collector import ITestLayer
+    >>> from silva.resourceinclude.tests.collector.collector import ITestLayer
     >>> request = TestRequest(skin=ITestLayer)
     >>> collector = component.getMultiAdapter(
     ...      (object(), request), IResourceCollector)
