@@ -116,7 +116,7 @@ class FileResource(object):
         raise KeyError(name)
 
     def data(self):
-        file = open(path, 'r')
+        file = open(self.path, 'r')
         data = file.read()
         file.close()
         return data
