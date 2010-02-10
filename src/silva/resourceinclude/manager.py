@@ -7,8 +7,16 @@ from zope import component
 
 from silva.resourceinclude.interfaces import IResourceManager
 
+import logging
+
+logger = logging.getLogger('silva.resourceinclude')
+
 
 class ResourceManager(object):
+    """This collect a set of resource.
+    """
+
+    interface.implements(IResourceManager)
 
     def __init__(self, request, names):
         self.request = request
@@ -24,6 +32,9 @@ class ResourceManager(object):
                 path = None
 
             resource = self.search_resource(name)
+            if resource is None:
+                logger.debug('Missing declare resource %s' % name)
+                continue
 
             if path is not None:
                 # Broken
@@ -39,8 +50,9 @@ class ResourceManager(object):
 
 
 class ResourceManagerFactory(object):
-
-    interface.implements(IResourceManager)
+    """This register a set of resource together and create a given
+    resource manager binded to a request.
+    """
 
     def __init__(self):
         self.names = []

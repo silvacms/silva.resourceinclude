@@ -21,7 +21,6 @@ class ResourceIncludeGrokker(martian.InstanceGrokker):
     martian.component(InterfaceClass)
 
     def grok(self, name, interface, module_info, config, **kw):
-
         resources = silvaconf.resource.bind(default=_marker).get(interface)
         if resources is _marker:
             return False

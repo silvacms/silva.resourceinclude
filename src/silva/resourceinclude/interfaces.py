@@ -31,6 +31,12 @@ class IResourceCollector(interface.Interface):
     that are available for it. It's usually instantiated with a
     browser request.
     """
+
+    def get_managers():
+        """Return the list of manager providing resources for this
+        collector.
+        """
+
     def collect():
         """Returns an ordered list of resources available for this
         collector.
