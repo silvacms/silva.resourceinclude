@@ -54,7 +54,7 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
         resource_path = [resource.filename,]
         while hasattr(resource, '__parent__'):
             resource = resource.__parent__
-            resource_path.append(resource.filename)
+            resource_path.insert(0, resource.filename)
         return resource_path
 
     def __call__(self):

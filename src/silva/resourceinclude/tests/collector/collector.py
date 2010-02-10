@@ -32,8 +32,9 @@
     ...      (object(), request), IResourceCollector)
 
     There is some resources now:
-    >>> collector.collect()
-    ()
+    >>> resources = collector.collect()
+    >>> resources
+    (<silva.resourceinclude.resource.MergedDirectoryResourceView object at ...>,)
 
 """
 
@@ -42,6 +43,6 @@ from silva.core import conf as silvaconf
 
 
 class ITestLayer(IDefaultBrowserLayer):
-    silvaconf.resource('styles.css')
+    silvaconf.resource('style.css')
 
 

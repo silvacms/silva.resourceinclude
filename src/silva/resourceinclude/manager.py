@@ -38,7 +38,7 @@ class ResourceManager(object):
 
             if path is not None:
                 # Broken
-                resource = resource[path]
+                resource = resource.publishTraverse(self.request, path)
                 name = "/".join((name, path))
 
             resources.append((name, resource))
