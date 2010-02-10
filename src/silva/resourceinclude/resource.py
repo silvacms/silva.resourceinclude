@@ -131,7 +131,7 @@ class DirectoryResource(object):
     def __init__(self, name, path):
         self.filename = name
         self.path = path
-        self.content_type = None
+        self.content_type = 'text/plain'
         self.lmt = os.stat(path)[8]
 
     def __getitem__(self, name):

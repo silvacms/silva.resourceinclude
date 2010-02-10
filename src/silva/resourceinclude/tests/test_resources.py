@@ -7,7 +7,7 @@ import unittest
 import doctest
 
 from Testing import ZopeTestCase
-from Testing.ZopeTestCase.zopedoctest.functional import getRootFolder, sync
+from Testing.ZopeTestCase.zopedoctest.functional import http
 from pkg_resources import resource_listdir
 from silva.resourceinclude.testing import ResourceIncludeLayer
 from zope.interface.verify import verifyObject
@@ -15,8 +15,7 @@ import five.grok.testing
 
 
 extraglobs = {'verifyObject': verifyObject,
-              'getRootFolder': getRootFolder,
-              'sync': sync,
+              'http': http,
               'grok': five.grok.testing.grok,}
 
 
