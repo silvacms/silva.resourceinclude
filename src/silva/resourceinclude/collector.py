@@ -16,11 +16,15 @@ from silva.resourceinclude.resource import \
 from silva.resourceinclude.interfaces import \
     IResourceCollector, IResourceManager
 
+import slimmer
+
 import tempfile
 import hashlib
 import threading
 
 lock = threading.Lock()
+SLIMMERS = {'text/css': slimmer.css_slimmer,
+            'text/javascript': slimmer.js_slimmer}
 
 
 class ResourceCollector(grok.MultiAdapter):
@@ -75,6 +79,7 @@ class ResourceCollector(grok.MultiAdapter):
             by_path = {}
             previous_path = None
             order_path = []
+            content_slimmer = SLIMMERS.get(content_type, lambda s:s)
             for resource in resources:
                 base_path = '/'.join(resource.context.path.split('/')[:-1])
                 if previous_path != base_path:
@@ -88,8 +93,8 @@ class ResourceCollector(grok.MultiAdapter):
 
                 for resource in resources:
                     resource_file = open(resource.context.path, 'rb')
-                    print >> merged_file, "/* %s */" % resource.__name__
-                    merged_file.write(resource_file.read())
+                    print >> merged_file, "/* %s */" % resource.context.filename
+                    merged_file.write(content_slimmer(resource_file.read()))
                     print >> merged_file, ""
                     resource_file.close()
 
