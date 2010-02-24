@@ -28,7 +28,7 @@ def _render_cachekey(method, obj):
 
 
 class ResourceIncludeProvider(silvaviews.ContentProvider):
-    grok.adapts(interface.Interface, IBrowserRequest, IBrowserView)
+    grok.context(interface.Interface)
     grok.name('resources')
 
     template = PageTemplateFile(local_file("provider.pt"))
