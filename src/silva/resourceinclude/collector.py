@@ -64,7 +64,7 @@ class ResourceCollector(grok.MultiAdapter):
         return tuple(resources)
 
     def merge(self, resources):
-        if Globals.DevelopmentMode:
+        if not Globals.DevelopmentMode:
            return
 
         by_type = {}
