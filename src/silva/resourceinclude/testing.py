@@ -33,15 +33,19 @@ def loadSite():
 
 
 from Testing.ZopeTestCase.layer import ZopeLite
+import Globals
+
 
 class ResourceIncludeLayer(ZopeLite):
 
     @classmethod
     def setUp(self):
+        self.previous_dev_mode = Globals.DevelopmentMode
+        Globals.DevelopmentMode = True
         loadSite()
 
     @classmethod
     def tearDown(self):
-        #cleanUp()
-        pass
+        cleanUp()
+        Globals.DevelopmentMode = self.previous_dev_mode
 
