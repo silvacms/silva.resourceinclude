@@ -2,9 +2,6 @@
 # See also LICENSE.txt
 # $Id$
 
-# Zope 2
-import Globals
-
 # Zope 3
 from five import grok
 from zope import interface, component
