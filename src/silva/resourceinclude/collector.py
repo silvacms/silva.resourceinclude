@@ -7,6 +7,8 @@ from five import grok
 from zope import interface, component
 from zope.publisher.interfaces.browser import IBrowserRequest
 
+import Globals
+
 # Silva
 from silva.resourceinclude.resource import \
     MergedResource, MergedDirectoryResource, ResourceFactory
@@ -61,7 +63,7 @@ class ResourceCollector(grok.MultiAdapter):
         return tuple(resources)
 
     def merge(self, resources):
-        if self.request.response.debug_mode:
+        if Globals.DevelopmentMode:
            return
 
         by_type = {}

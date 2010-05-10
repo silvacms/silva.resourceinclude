@@ -4,13 +4,12 @@
 
 from five import grok
 from zope import component, interface
-from zope.publisher.interfaces.browser import IBrowserRequest
 from zope.publisher.interfaces.browser import IBrowserView
 
-from silva.core.views import views as silvaviews
-from silva.resourceinclude.interfaces import IResourceCollector
 from chameleon.zpt.template import PageTemplateFile
 from plone.memoize import ram
+from silva.core.views import views as silvaviews
+from silva.resourceinclude.interfaces import IResourceCollector
 
 import os.path
 import mimetypes

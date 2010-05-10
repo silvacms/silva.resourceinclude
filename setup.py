@@ -7,6 +7,10 @@ import os
 
 version = '1.1dev'
 
+tests_require = [
+    'silva.wsgi [test]',
+    ]
+
 setup(name='silva.resourceinclude',
       version=version,
       description="z3c.resourceinclude support for Silva",
@@ -46,4 +50,6 @@ setup(name='silva.resourceinclude',
           'zope.publisher',
           'zope.schema',
           ],
+      tests_require = tests_require,
+      extras_require = {'test': tests_require},
       )

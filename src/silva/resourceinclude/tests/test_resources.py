@@ -6,46 +6,33 @@
 import unittest
 import doctest
 
-from Testing import ZopeTestCase
-from Testing.ZopeTestCase.zopedoctest.functional import http
-from pkg_resources import resource_listdir
-from silva.resourceinclude.testing import ResourceIncludeLayer
+from silva.wsgi.testing import BrowserLayer, suite_from_package, http
 from zope.interface.verify import verifyObject
-import five.grok.testing
+import silva.resourceinclude
 
 
-extraglobs = {'verifyObject': verifyObject,
-              'http': http,
-              'grok': five.grok.testing.grok,}
+layer = BrowserLayer(silva.resourceinclude, zcml_file='configure.zcml')
+globs = {'verifyObject': verifyObject,
+         'http': http,
+         'grok': layer.grok,}
 
 
-def suiteFromPackage(name):
-    files = resource_listdir(__name__, name)
-    suite = unittest.TestSuite()
-    for filename in files:
-        if not filename.endswith('.py'):
-            continue
-        if filename.endswith('_fixture.py'):
-            continue
-        if filename == '__init__.py':
-            continue
+def create_test(build_test_suite, name):
+    test =  build_test_suite(
+        name,
+        globs=globs,
+        optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
+    test.layer = layer
+    return test
 
-        dottedname = 'silva.resourceinclude.tests.%s.%s' % (name, filename[:-3])
-        test = ZopeTestCase.FunctionalDocTestSuite(
-            dottedname,
-            extraglobs=extraglobs,
-            optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
-
-        test.layer = ResourceIncludeLayer
-        suite.addTest(test)
-    return suite
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(suiteFromPackage('collector'))
-    suite.addTest(suiteFromPackage('directive'))
-    suite.addTest(suiteFromPackage('resource'))
+    suite.addTest(suite_from_package(
+            'silva.resourceinclude.tests.collector', create_test))
+    suite.addTest(suite_from_package(
+            'silva.resourceinclude.tests.directive', create_test))
+    suite.addTest(suite_from_package(
+            'silva.resourceinclude.tests.resource', create_test))
     return suite
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')
