@@ -8,7 +8,7 @@ import os
 version = '1.1dev'
 
 tests_require = [
-    'silva.wsgi [test]',
+    'infrae.wsgi [test]',
     ]
 
 setup(name='silva.resourceinclude',
