@@ -6,14 +6,16 @@
 import unittest
 import doctest
 
-from infrae.wsgi.testing import BrowserLayer, suite_from_package, http
+from infrae.wsgi.testing import BrowserLayer, suite_from_package, http, Browser
 from zope.interface.verify import verifyObject
 import silva.resourceinclude
 
 
 layer = BrowserLayer(silva.resourceinclude, zcml_file='configure.zcml')
 globs = {'verifyObject': verifyObject,
+         'getRootFolder': layer.get_application,
          'http': http,
+         'Browser': Browser,
          'grok': layer.grok,}
 
 

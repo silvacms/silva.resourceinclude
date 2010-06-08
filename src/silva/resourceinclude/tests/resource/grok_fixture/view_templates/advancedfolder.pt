@@ -1,0 +1,1 @@
+<a href="#" tal:attributes="href view/static/style.css">Link</a>

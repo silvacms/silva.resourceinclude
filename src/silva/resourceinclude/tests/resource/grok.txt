@@ -1,0 +1,17 @@
+
+Test grok integration:
+
+  >>> grok('silva.resourceinclude.tests.resource.grok_fixture')
+
+Add a folder that is the our site root:
+
+  >>> root = getRootFolder()
+  >>> root.manage_addProduct['OFS'].manage_addFolder('folder', 'Folder')
+
+Access the Grok view that lookup a resource:
+
+  >>> browser = Browser()
+  >>> browser.handleErrors = False
+  >>> browser.open('http://localhost/folder/advancedfolder')
+  >>> print browser.contents
+  <a href="/++resource++silva.resourceinclude.tests.resource.grok_fixture/style.css">Link</a>

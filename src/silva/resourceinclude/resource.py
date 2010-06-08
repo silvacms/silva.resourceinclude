@@ -9,6 +9,7 @@ from zope.datetime import rfc1123_date
 from zope.datetime import time as timeFromDateTimeString
 from zope.publisher.browser import BrowserPage
 from zope.publisher.interfaces.browser import IBrowserRequest
+from zope.traversing.interfaces import ITraversable
 
 # Silva
 from silva.core.views.interfaces import IVirtualSite
@@ -25,7 +26,14 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
     """View used to download the resource file.
     """
     grok.adapts(IResource, IBrowserRequest)
+    grok.implements(ITraversable)
     grok.provides(interface.Interface)
+
+    def traverse(self, name, remaining):
+        # Implement ITraversable for the layout/static kind of behavior
+        resource = self.context[name]
+        return component.getMultiAdapter(
+            (resource, self.request,), interface.Interface)
 
     def browserDefault(self, request):
         # HEAD and GET request are managed by methods on the object
