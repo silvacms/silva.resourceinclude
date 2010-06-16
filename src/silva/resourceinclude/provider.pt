@@ -5,18 +5,18 @@
   <tal:resource tal:repeat="resource resources">
 
     <script type="text/javascript" src="${resource.url}"
-	    tal:condition="resource.content_type == 'application/x-javascript'">
+            tal:condition="resource.content_type == 'application/javascript'">
     </script>
 
     <style media="all" type="text/css"
-	       tal:condition="resource.content_type == 'text/css'">
+           tal:condition="resource.content_type == 'text/css'">
       <!-- @import url("${resource.url}"); -->
     </style>
 
     <link type="text/kss"
-	  rel="kinetic-stylesheet"
-	  tal:condition="resource.content_type == 'text/kss'"
-	  tal:attributes="href resource.url" />
+          rel="kinetic-stylesheet"
+          tal:condition="resource.content_type == 'text/kss'"
+          tal:attributes="href resource.url" />
 
   </tal:resource>
 
