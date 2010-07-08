@@ -14,6 +14,8 @@ class IResource(interface.Interface):
         "Filesystem path to the resource")
     content_type = interface.Attribute(
         "Content type of the resource")
+    content_length = interface.Attribute(
+        "Content length of the resource")
     lmt = interface.Attribute(
         "Last modification time for the resource")
 

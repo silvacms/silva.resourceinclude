@@ -3,7 +3,7 @@ First we need to grok our test to register the resources:
 
   >>> grok('silva.resourceinclude.tests.resource.requests_fixture')
 
-Head requests
+HEAD requests
 =============
 
 Now, we should be able to do request on our resources, here a CSS file:
@@ -19,9 +19,11 @@ Now, we should be able to do request on our resources, here a CSS file:
   >>> headers['Content-Type']
   'text/css'
   >>> headers['Content-Length']
-  '0'
+  '26'
   >>> headers['Cache-Control']
   'public,max-age=31536000'
+  >>> len(response.getBody())
+  0
 
 Image
 -----
@@ -38,9 +40,11 @@ On an image for instance:
   >>> headers['Content-Type']
   'image/gif'
   >>> headers['Content-Length']
-  '0'
+  '194'
   >>> headers['Cache-Control']
   'public,max-age=31536000'
+  >>> len(response.getBody())
+  0
 
 Container
 ---------
@@ -49,7 +53,7 @@ On a resource directory:
 
   >>> response = http('HEAD %s/images HTTP/1.1' % path, parsed=True)
   >>> response.getStatus()
-  200
+  204
   >>> headers = response.getHeaders()
   >>> headers.keys()
   ['Last-Modified', 'Content-Length', 'Expires',
@@ -60,4 +64,68 @@ On a resource directory:
   '0'
   >>> headers['Cache-Control']
   'public,max-age=31536000'
+  >>> len(response.getBody())
+  0
 
+GET requests
+============
+
+Now, we should be able to do request on our resources, here a CSS file:
+
+  >>> response = http('GET %s/style.css HTTP/1.1' % path, parsed=True)
+  >>> response.getStatus()
+  200
+  >>> headers = response.getHeaders()
+  >>> headers.keys()
+  ['Last-Modified', 'Content-Length', 'Expires',
+   'Content-Type', 'Cache-Control']
+  >>> headers['Content-Type']
+  'text/css'
+  >>> headers['Content-Length']
+  '26'
+  >>> headers['Cache-Control']
+  'public,max-age=31536000'
+  >>> len(response.getBody())
+  26
+
+Image
+-----
+
+On an image for instance:
+
+  >>> response = http('GET %s/images/img01.gif HTTP/1.1' % path, parsed=True)
+  >>> response.getStatus()
+  200
+  >>> headers = response.getHeaders()
+  >>> headers.keys()
+  ['Last-Modified', 'Content-Length', 'Expires',
+   'Content-Type', 'Cache-Control']
+  >>> headers['Content-Type']
+  'image/gif'
+  >>> headers['Content-Length']
+  '194'
+  >>> headers['Cache-Control']
+  'public,max-age=31536000'
+  >>> len(response.getBody())
+  194
+
+Container
+---------
+
+On a resource directory (you see nothing actually on the directory):
+
+  >>> response = http('GET %s/images HTTP/1.1' % path, parsed=True)
+  >>> response.getStatus()
+  204
+  >>> headers = response.getHeaders()
+  >>> headers.keys()
+  ['Last-Modified', 'Content-Length', 'Expires',
+   'Content-Type', 'Cache-Control']
+  >>> headers['Content-Type']
+  'text/plain'
+  >>> headers['Content-Length']
+  '0'
+  >>> headers['Cache-Control']
+  'public,max-age=31536000'
+  >>> len(response.getBody())
+  0

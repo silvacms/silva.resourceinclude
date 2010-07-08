@@ -22,6 +22,15 @@ import os
 CACHE_TIME = 31536000 # one year - never expire
 
 
+def file_length(opened_file):
+    """Return file length.
+    """
+    opened_file.seek(0, 2)
+    length = opened_file.tell()
+    opened_file.seek(0, 0)
+    return length
+
+
 class ResourceView(BrowserPage, grok.MultiAdapter):
     """View used to download the resource file.
     """
@@ -79,6 +88,7 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
         expires = time.time() + CACHE_TIME
         # set response headers
         response.setHeader('Content-Type', self.context.content_type)
+        response.setHeader('Content-Length', self.context.content_length)
         response.setHeader('Cache-Control', 'public,max-age=%s' % CACHE_TIME)
         response.setHeader('Last-Modified', rfc1123_date(self.context.lmt))
         response.setHeader('Expires', rfc1123_date(expires))
@@ -118,15 +128,16 @@ class FileResource(object):
         self.filename = name
         self.path = path
         self.content_type = mimetypes.guess_type(path)[0]
+        with open(self.path) as resource:
+            self.content_length = file_length(resource)
         self.lmt = os.stat(path)[8]
 
     def __getitem__(self, name):
         raise KeyError(name)
 
     def data(self):
-        file = open(self.path, 'r')
-        data = file.read()
-        file.close()
+        with open(self.path ,'r') as resource:
+            data = resource.read()
         return data
 
 
@@ -140,6 +151,7 @@ class DirectoryResource(object):
         self.filename = name
         self.path = path
         self.content_type = 'text/plain'
+        self.content_length = 0
         self.lmt = os.stat(path)[8]
 
     def __getitem__(self, name):
@@ -173,6 +185,7 @@ class MergedResource(object):
         self.filename = 'resource' + self.__extension
         self.path = None
         self.content_type = content_type
+        self.content_length = file_length(merged_file)
         self.lmt = time.time()
 
     def data(self):
