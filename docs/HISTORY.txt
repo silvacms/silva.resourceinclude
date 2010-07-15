@@ -1,21 +1,33 @@
 Changes
 =======
 
-1.0b2 (2009-12-09)
+2.0 (2010/07/15)
+----------------
+
+* Implement resources export, and use it.
+
+* Improve caching (HTTP headers, HEAD requests, 304).
+
+
+1.0b2 (2009/12/09)
 ------------------
 
 * Refactor merged resources code.
+
 * Fix a thread safe issue.
+
 * Don't depend anymore on z3c.resourceinclude.
+
 * Improve caching.
 
-1.0b1 (2009-11-18)
+1.0b1 (2009/11/18)
 ------------------
 
 * Add the resource grokker.
+
 * Fix various bugs from the previous version.
 
-1.0a1 (2008-11-17)
+1.0a1 (2008/11/17)
 ------------------
 
 * Initial release.

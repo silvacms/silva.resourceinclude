@@ -4,7 +4,6 @@
 
 from five import grok
 from zope import component, interface
-from zope.publisher.interfaces.browser import IBrowserView
 
 from chameleon.zpt.template import PageTemplateFile
 from plone.memoize import ram
