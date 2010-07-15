@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2.0'
+version = '2.1dev'
 
 tests_require = [
     'infrae.wsgi [test]',
@@ -26,7 +26,7 @@ setup(name='silva.resourceinclude',
           ],
       keywords='zope2 resourceinclude z3c',
       author='Sylvain Viollon',
-      author_email='zope-dev@zope.org',
+      author_email='info@infrae.com',
       url='http://svn.infrae.com/silva.resourceinclude/trunk',
       license='ZPL',
       package_dir={'': 'src'},
