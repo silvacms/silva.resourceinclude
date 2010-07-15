@@ -4,9 +4,11 @@ Changes
 2.0 (2010/07/15)
 ----------------
 
-* Implement resources export, and use it.
+* Implement resources export, and use it,
 
-* Improve caching (HTTP headers, HEAD requests, 304).
+* Improve caching (HTTP headers, HEAD requests, 304),
+
+* Update syntax and imports for Zope 2.12 and Python 2.6.
 
 
 1.0b2 (2009/12/09)
