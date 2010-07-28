@@ -13,7 +13,7 @@ tests_require = [
 
 setup(name='silva.resourceinclude',
       version=version,
-      description="z3c.resourceinclude support for Silva",
+      description="z3c.resourceinclude like support for Silva",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       classifiers=[
