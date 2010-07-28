@@ -2,6 +2,11 @@
 # See also LICENSE.txt
 # $Id$
 
+import hashlib
+import os.path
+import tempfile
+import threading
+
 # Zope 3
 from five import grok
 from zope import interface, component
@@ -10,16 +15,12 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 import Globals
 
 # Silva
-from silva.resourceinclude.resource import \
-    MergedResource, MergedDirectoryResource, ResourceFactory
-from silva.resourceinclude.interfaces import \
-    IResourceCollector, IResourceManager
+from silva.resourceinclude.resource import (
+    MergedResource, MergedDirectoryResource, ResourceFactory)
+from silva.resourceinclude.interfaces import (
+    IResourceCollector, IResourceManager)
 
 import slimmer
-
-import tempfile
-import hashlib
-import threading
 
 lock = threading.Lock()
 SLIMMERS = {'text/css': slimmer.css_slimmer,
@@ -80,7 +81,8 @@ class ResourceCollector(grok.MultiAdapter):
             order_path = []
             content_slimmer = SLIMMERS.get(content_type, lambda s:s)
             for resource in resources:
-                base_path = '/'.join(resource.context.path.split('/')[:-1])
+                base_path = os.path.sep.join(
+                    resource.context.path.split(os.path.sep)[:-1])
                 if previous_path != base_path:
                     order_path.append(base_path)
                 by_path.setdefault(base_path, []).append(resource)
