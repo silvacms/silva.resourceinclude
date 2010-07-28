@@ -1,0 +1,45 @@
+First we need to grok our test and the test resources:
+
+  >>> grok('silva.resourceinclude.tests.collector_fixtures')
+
+We need a test request:
+
+  >>> from zope.publisher.browser import TestRequest
+  >>> request = TestRequest()
+
+If we adapts the request with the IResourceCollector we should
+get one:
+
+  >>> from zope import component
+  >>> from silva.resourceinclude.interfaces import IResourceCollector
+  >>> collector = component.getMultiAdapter(
+  ...      (object(), request), IResourceCollector)
+  >>> collector
+  <silva.resourceinclude.collector.ResourceCollector object at ...>
+  >>> verifyObject(IResourceCollector, collector)
+  True
+
+Our request in our case doesn't have any layer by default, so we
+don't have any resources associated:
+
+  >>> collector.collect()
+  ()
+
+Now let's get a request which use our test layer:
+
+  >>> from silva.resourceinclude.tests.collector.collector import ITestLayer
+  >>> request = TestRequest(skin=ITestLayer)
+  >>> collector = component.getMultiAdapter(
+  ...      (object(), request), IResourceCollector)
+
+There is some resources now:
+
+  >>> merged_resources = collector.collect()
+  >>> merged_resources
+  (<silva.resourceinclude.resource.MergedDirectoryResourceView object at ...>,)
+
+We can access to files in static the same way before:
+
+  >>> image_resources = merged_resources.publishTraverse(request, 'images')
+
+
