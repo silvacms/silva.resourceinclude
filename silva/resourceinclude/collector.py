@@ -229,7 +229,8 @@ class ResourceCollector(Acquisition.Implicit):
             previous_path = None
             order_path = []
             for resource in resources:
-                base_path = '/'.join(resource.context.path.split('/')[:-1])
+                base_path = os.path.sep.join(
+                    resource.context.path.split(os.path.sep)[:-1])
                 if previous_path != base_path:
                     order_path.append(base_path)
                 by_path.setdefault(base_path, []).append(resource)
