@@ -1,6 +1,6 @@
 First we need to grok our test and the test resources:
 
-  >>> grok('silva.resourceinclude.tests.collector_fixtures')
+  >>> grok('silva.resourceinclude.tests.collector.collector_fixtures')
 
 We need a test request:
 
@@ -27,7 +27,7 @@ don't have any resources associated:
 
 Now let's get a request which use our test layer:
 
-  >>> from silva.resourceinclude.tests.collector.collector import ITestLayer
+  >>> from silva.resourceinclude.tests.collector.collector_fixtures.collector import ITestLayer
   >>> request = TestRequest(skin=ITestLayer)
   >>> collector = component.getMultiAdapter(
   ...      (object(), request), IResourceCollector)
@@ -36,10 +36,21 @@ There is some resources now:
 
   >>> merged_resources = collector.collect()
   >>> merged_resources
-  (<silva.resourceinclude.resource.MergedDirectoryResourceView object at ...>,)
+  (<silva.resourceinclude.resource.MergedDirectoryResourceView object at ...>,
+   <silva.resourceinclude.resource.MergedDirectoryResourceView object at ...>)
+
+  >>> merged_resource = merged_resources[0]
 
 We can access to files in static the same way before:
 
-  >>> image_resources = merged_resources.publishTraverse(request, 'images')
+  >>> images_resource = merged_resource.publishTraverse(request, 'images')
+  >>> images_resource
+  <silva.resourceinclude.resource.ResourceView object at ...>
 
 
+If files doesn't exists, however we still have an error:
+
+  >>> merged_resource.publishTraverse(request, 'i don\'t know you')
+  Traceback (most recent call last):
+     ...
+  NotFound: Object: ... name: "i don't know you"
