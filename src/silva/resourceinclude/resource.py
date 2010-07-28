@@ -128,7 +128,7 @@ class FileResource(object):
         self.filename = name
         self.path = path
         self.content_type = mimetypes.guess_type(path)[0]
-        with open(self.path) as resource:
+        with open(self.path, 'rb') as resource:
             self.content_length = file_length(resource)
         self.lmt = os.stat(path)[8]
 
@@ -136,7 +136,7 @@ class FileResource(object):
         raise KeyError(name)
 
     def data(self):
-        with open(self.path ,'r') as resource:
+        with open(self.path ,'rb') as resource:
             data = resource.read()
         return data
 
