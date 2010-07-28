@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0.1'
+version = '1.1dev'
 
 setup(name='silva.resourceinclude',
       version=version,
@@ -23,7 +23,7 @@ setup(name='silva.resourceinclude',
           ],
       keywords='zope2 resourceinclude z3c',
       author='Sylvain Viollon',
-      author_email='zope-dev@zope.org',
+      author_email='info@infrae.com',
       url='http://svn.infrae.com/silva.resourceinclude/trunk',
       license='ZPL',
       packages=find_packages(exclude=['ez_setup']),
