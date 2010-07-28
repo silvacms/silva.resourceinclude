@@ -1,10 +1,14 @@
 Changes
 =======
 
-2.1 (unreleased)
-----------------
+2.0.1 (unreleased)
+------------------
 
-* ...
+* Bug fix on windows: fix merged resources to be able to properly
+  access other relatives resources.
+
+* Bug fix on windows: fix mode used to open files in order to fully
+  get all resource data out of them.
 
 2.0 (2010/07/15)
 ----------------
