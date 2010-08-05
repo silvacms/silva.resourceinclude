@@ -10,6 +10,10 @@ Changes
 * Bug fix on windows: fix mode used to open files in order to fully
   get all resource data out of them.
 
+* Vary cache key on ``HTTP_HOST`` for the resource include provider
+  (that let you access the same site with different hostname and get
+  URL for the hostname you asked in your response).
+
 2.0 (2010/07/15)
 ----------------
 

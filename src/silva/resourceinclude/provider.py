@@ -20,9 +20,10 @@ def local_file(filename):
     return os.path.join(os.path.dirname(__file__), filename)
 
 
-def _render_cachekey(method, obj):
+def cache_include(method, obj):
     return tuple(map(lambda i: i.__identifier__,
-                     obj.request.__provides__.interfaces()))
+                     obj.request.__provides__.interfaces())) + (
+        obj.request['HTTP_HOST'],)
 
 
 class ResourceIncludeProvider(silvaviews.ContentProvider):
@@ -35,7 +36,7 @@ class ResourceIncludeProvider(silvaviews.ContentProvider):
         self.collector = component.getMultiAdapter(
             (self.context, self.request), IResourceCollector)
 
-    @ram.cache(_render_cachekey)
+    @ram.cache(cache_include)
     def render(self):
         resources = [
             {'content_type': resource.context.content_type,
