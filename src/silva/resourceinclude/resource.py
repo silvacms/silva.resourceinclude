@@ -38,11 +38,13 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
     grok.implements(ITraversable)
     grok.provides(interface.Interface)
 
-    def traverse(self, name, remaining):
+    def traverse(self, name, remaining=None):
         # Implement ITraversable for the layout/static kind of behavior
         resource = self.context[name]
         return component.getMultiAdapter(
             (resource, self.request,), interface.Interface)
+
+    __getitem__ = traverse
 
     def browserDefault(self, request):
         # HEAD and GET request are managed by methods on the object
