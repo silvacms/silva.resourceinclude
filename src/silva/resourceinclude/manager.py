@@ -18,8 +18,9 @@ class ResourceManager(object):
 
     interface.implements(IResourceManager)
 
-    def __init__(self, request, names):
+    def __init__(self, request, context, names):
         self.request = request
+        self.context = context
         self.names = names
 
     def get_resources(self):
@@ -61,8 +62,5 @@ class ResourceManagerFactory(object):
         if name not in self.names:
             self.names.append(name)
 
-    def __call__(self, request):
-        return ResourceManager(request, self.names)
-
-
-
+    def __call__(self, request, context):
+        return ResourceManager(request, context, self.names)

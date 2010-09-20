@@ -5,12 +5,11 @@
 from martian.error import GrokError
 import martian
 
+from zope.interface import Interface
 from zope.interface.interface import InterfaceClass
-from zope.publisher.interfaces.browser import IDefaultBrowserLayer, \
-    IBrowserRequest
+from zope.publisher.interfaces.browser import IDefaultBrowserLayer
 
 from silva.resourceinclude.zcml import handler as resourceHandler
-
 from silva.core.conf.martiansupport import directives as silvaconf
 
 
@@ -39,10 +38,9 @@ class ResourceIncludeGrokker(martian.InstanceGrokker):
         resources = [resource_dir + '/' + r for r in resources]
 
         config.action(
-            discriminator = ('resourceInclude', IBrowserRequest,
-                             interface, "".join(resources)),
+            discriminator = (
+                'resourceInclude', interface, Interface, "".join(resources)),
             callable = resourceHandler,
-            args = (resources, interface, None, None))
+            args = (resources, interface, Interface, None))
 
         return True
-

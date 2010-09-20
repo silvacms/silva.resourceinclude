@@ -41,7 +41,8 @@ class ResourceCollector(grok.MultiAdapter):
 
     def get_managers(self):
         managers = [(name, manager) for name, manager in
-                    component.getAdapters((self.request,), IResourceManager)]
+                    component.getAdapters(
+                (self.request, self.context), IResourceManager)]
         managers.sort(key=lambda (name, manager): name)
         return managers
 
