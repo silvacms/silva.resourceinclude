@@ -7,7 +7,13 @@
     <meta:directive
        name="resourceInclude"
        schema=".zcml.IResourceIncludeDirective"
-       handler=".zcml.includeDirective"
+       handler=".zcml.include_directive"
+       />
+
+    <meta:directive
+       name="resourceLayerInclude"
+       schema=".zcml.IResourcesIncludeDirective"
+       handler=".zcml.include_layer_directive"
        />
 
   </meta:directives>
