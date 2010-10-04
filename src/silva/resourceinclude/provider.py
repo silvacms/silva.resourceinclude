@@ -8,7 +8,7 @@ from five import grok
 from zope import component, interface
 
 from chameleon.zpt.template import PageTemplateFile
-from plone.memoize import ram
+from silva.core.cache.descriptors import cached_method
 from silva.core.views import views as silvaviews
 from silva.resourceinclude.interfaces import IResourceCollector
 
@@ -21,7 +21,7 @@ def interfaces_identifiers(obj):
     return tuple(map(lambda i: i.__identifier__, obj.__provides__.interfaces()))
 
 
-def cache_key(method, obj):
+def cache_key(obj):
     return interfaces_identifiers(obj.request) + \
         interfaces_identifiers(obj.context) + \
         (obj.request['HTTP_HOST'],)
@@ -33,7 +33,7 @@ class ResourceIncludeProvider(silvaviews.ContentProvider):
 
     template = PageTemplateFile(local_file("provider.pt"))
 
-    @ram.cache(cache_key)
+    @cached_method(region='shared', key=cache_key)
     def render(self):
         collector = component.getMultiAdapter(
             (self.context, self.request), IResourceCollector)
