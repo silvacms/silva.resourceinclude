@@ -1,8 +1,8 @@
 Changes
 =======
 
-2.0.1 (unreleased)
-------------------
+2.1 (unreleased)
+----------------
 
 * Bug fix on windows: fix merged resources to be able to properly
   access other relatives resources.
@@ -13,6 +13,16 @@ Changes
 * Vary cache key on ``HTTP_HOST`` for the resource include provider
   (that let you access the same site with different hostname and get
   URL for the hostname you asked in your response).
+
+* plone.memoize is replaced with silva.core.cache.
+
+* It is now to include a ressource only for a given content. The ZCML
+  is extended with a ``context`` option that let you do that.
+
+* A new ZCML directive called ``resourceLayerInclude`` let you
+  reinclude for a different layer and content a list of resources
+  defined on an interface with the martian directive.
+
 
 2.0 (2010/07/15)
 ----------------
