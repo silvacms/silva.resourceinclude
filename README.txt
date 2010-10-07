@@ -9,4 +9,6 @@ It provides as well a full implementation of the Zope resource export
 mechanism for Zope 2, that properly implement HEAD requests and are
 optimized for caching purpose.
 
+Please refer to the official Silva documentation to see how to use it.
+
 .. _z3c.resourceinclude: http://pypi.python.org/pypi/z3c.resourceinclude

@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.1 (unreleased)
+2.1 (2010-10-07)
 ----------------
 
 * Bug fix on windows: fix merged resources to be able to properly

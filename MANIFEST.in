@@ -1,4 +1,4 @@
-recursive-include src *.py *.zcml *.pt *.js *.css
+recursive-include src *.py *.zcml *.pt *.js *.gif *.css *.txt
 recursive-include docs *.txt
 include README.txt
 include buildout.cfg
