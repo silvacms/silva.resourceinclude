@@ -189,7 +189,7 @@ CONTENT_TYPES = {'js': 'text/javascript',
 def prepare_resources(event):
     global MANAGERS
     for layer, context, managers, extension in lookup_resources(MANAGERS):
-        logger.info('mergin: %s %s %s %s' %(layer, context, managers, extension))
+        logger.info('error: %s %s %s %s' %(layer, context, managers, extension))
         request = TestRequest()
         context = object()
         alsoProvides(request, layer)
@@ -229,7 +229,7 @@ def prepare_resources(event):
             digest = hashlib.sha1(merged_file.read()).hexdigest()
             name = digest
 
-            logger.info('registering: %s %s'  %(name, base_path))
+            logger.error('registering: %s %s'  %(name, base_path))
             resource = MergedDirectoryResource(
                 name, base_path,
                 MergedResource(merged_file, content_type))
