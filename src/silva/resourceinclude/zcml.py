@@ -2,6 +2,7 @@
 # See also LICENSE.txt
 # $Id$
 
+import logging
 from itertools import repeat
 
 from zope import component
@@ -19,7 +20,7 @@ from silva.core.conf.martiansupport import directives as silvaconf
 
 MANAGERS = {}
 _marker = object()
-
+logger = logging.getLogger('silva.resourceinclude')
 
 class IResourceIncludeDirective(Interface):
     include = Tokens(
@@ -188,7 +189,7 @@ CONTENT_TYPES = {'js': 'text/javascript',
 def prepare_resources(event):
     global MANAGERS
     for layer, context, managers, extension in lookup_resources(MANAGERS):
-        print 'mergin: ', layer, context, managers, extension
+        logger.info('mergin: %s %s %s %s' %(layer, context, managers, extension))
         request = TestRequest()
         context = object()
         alsoProvides(request, layer)
@@ -228,7 +229,7 @@ def prepare_resources(event):
             digest = hashlib.sha1(merged_file.read()).hexdigest()
             name = digest
 
-            print 'registering:', name, base_path
+            logger.info('registering: %s %s'  %(name, base_path))
             resource = MergedDirectoryResource(
                 name, base_path,
                 MergedResource(merged_file, content_type))
