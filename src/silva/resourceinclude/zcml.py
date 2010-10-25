@@ -181,8 +181,8 @@ import os.path
 import hashlib
 
 SLIMMERS = {'text/css': slimmer.css_slimmer,
-            'text/javascript': slimmer.js_slimmer}
-CONTENT_TYPES = {'js': 'text/javascript',
+            'application/javascript': slimmer.js_slimmer}
+CONTENT_TYPES = {'js': 'application/javascript',
                  'css': 'text/css'}
 
 @grok.subscribe(IProcessStarting)
