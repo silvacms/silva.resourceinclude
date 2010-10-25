@@ -236,15 +236,20 @@ def prepare_resources(event):
             merged_file.seek(0)
             name = hashlib.sha1(merged_file.read()).hexdigest()
 
-            logger.info('Registering: %s (path %s)'  %(name, path))
-            resource = MergedDirectoryResource(
-                name, path, MergedResource(merged_file, content_type))
+            existing_resource = component.queryAdapter(
+                (TestRequest(),), name=name)
+            if existing_resource is None:
+                logger.info('Registering: %s (path %s)'  %(name, path))
+                resource = MergedDirectoryResource(
+                    name, path, MergedResource(merged_file, content_type))
 
-            # register factory
-            component.provideAdapter(
-                ResourceFactory(resource), (IBrowserRequest,), Interface, name=name)
+                # register factory
+                component.provideAdapter(
+                    ResourceFactory(resource),
+                    (IBrowserRequest,), Interface, name=name)
 
             merged_manager.add(name)
 
         component.provideAdapter(
-            merged_manager, (layer, context), IProductionResourceManager, name=content_type)
+            merged_manager,
+            (layer, context), IProductionResourceManager, name=content_type)
