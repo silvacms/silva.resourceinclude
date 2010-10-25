@@ -55,7 +55,8 @@ class ResourceManagerFactory(object):
     resource manager binded to a request.
     """
 
-    def __init__(self):
+    def __init__(self, identifier):
+        self.identifier = identifier
         self.names = []
 
     def add(self, name):
