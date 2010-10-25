@@ -67,3 +67,11 @@ class IResourceManager(interface.Interface):
         """Look for the given resource.
         """
 
+
+class IDevelopmentResourceManager(IResourceManager):
+    pass
+
+
+class IProductionResourceManager(IResourceManager):
+    pass
+

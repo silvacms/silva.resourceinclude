@@ -18,10 +18,11 @@ class ResourceManager(object):
 
     interface.implements(IResourceManager)
 
-    def __init__(self, request, context, names):
+    def __init__(self, request, context, identifier, names):
         self.request = request
         self.context = context
         self.names = names
+        self.identifier = identifier
 
     def get_resources(self):
         resources = []
@@ -42,7 +43,7 @@ class ResourceManager(object):
                 resource = resource.publishTraverse(self.request, path)
                 name = "/".join((name, path))
 
-            resources.append((name, resource))
+            resources.append(resource)
 
         return resources
 
@@ -64,4 +65,4 @@ class ResourceManagerFactory(object):
             self.names.append(name)
 
     def __call__(self, request, context):
-        return ResourceManager(request, context, self.names)
+        return ResourceManager(request, context, self.identifier, self.names)

@@ -2,25 +2,41 @@
 # See also LICENSE.txt
 # $Id$
 
-import logging
 from itertools import repeat
+import hashlib
+import logging
+import operator
+import os.path
+import cssmin
+import tempfile
 
+from five import grok
 from zope import component
 from zope.configuration.fields import Tokens, GlobalInterface
 from zope.interface import Interface
-from zope.publisher.interfaces.browser import IDefaultBrowserLayer
+from zope.interface import alsoProvides
+from zope.processlifetime import IProcessStarting
+from zope.publisher.browser import TestRequest
 from zope.publisher.interfaces.browser import IBrowserRequest
-
 from zope.publisher.interfaces.browser import IBrowserSkinType
+from zope.publisher.interfaces.browser import IDefaultBrowserLayer
 from zope.schema import TextLine
 
 from silva.resourceinclude.manager import ResourceManagerFactory
-from silva.resourceinclude.interfaces import IResourceManager
+from silva.resourceinclude.interfaces import IDevelopmentResourceManager
+from silva.resourceinclude.interfaces import IProductionResourceManager
 from silva.core.conf.martiansupport import directives as silvaconf
+from silva.resourceinclude.resource import (
+    MergedResource, MergedDirectoryResource, ResourceFactory)
+
 
 MANAGERS = {}
+SLIMMERS = {'text/css': cssmin.cssmin}
+CONTENT_TYPES = {'js': 'application/javascript',
+                 'css': 'text/css'}
 _marker = object()
 logger = logging.getLogger('silva.resourceinclude')
+
 
 class IResourceIncludeDirective(Interface):
     include = Tokens(
@@ -131,7 +147,7 @@ def handler(include, layer, context, info):
 
             # register as an adapter
             component.provideAdapter(
-                manager, (layer, context), IResourceManager, name=name)
+                manager, (layer, context), IDevelopmentResourceManager, name=name)
 
         manager.add(path)
 
@@ -167,39 +183,31 @@ def lookup_resources(managers):
                    extension)
 
 
-from five import grok
-from zope.processlifetime import IProcessStarting
-from zope.publisher.browser import TestRequest
-from zope.interface import alsoProvides
-from silva.resourceinclude.resource import (
-    MergedResource, MergedDirectoryResource, ResourceFactory)
-
-import operator
-import slimmer
-import tempfile
-import os.path
-import hashlib
-
-SLIMMERS = {'text/css': slimmer.css_slimmer,
-            'application/javascript': slimmer.js_slimmer}
-CONTENT_TYPES = {'js': 'application/javascript',
-                 'css': 'text/css'}
-
 @grok.subscribe(IProcessStarting)
 def prepare_resources(event):
     global MANAGERS
+    logger.info('Merging and packing resources ...')
+    manager_count = 0
     for layer, context, managers, extension in lookup_resources(MANAGERS):
-        logger.info('error: %s %s %s %s' %(layer, context, managers, extension))
+        logger.info('Merging: for %s and %s files %s (%s)' % (
+                layer.__name__,
+                context.__name__,
+                ', '.join(
+                    reduce(operator.add,
+                           map(operator.attrgetter('names'), managers))),
+                extension))
+
+        merged_manager = ResourceManagerFactory('%s-merged-resources-%03d' % (
+                extension, manager_count))
+        manager_count += 1
         request = TestRequest()
-        context = object()
         alsoProvides(request, layer)
         resources = []
         content_type = CONTENT_TYPES.get(extension)
         for manager in managers:
             resources.extend(filter(
                     lambda r: r.context.content_type == content_type,
-                    map(operator.itemgetter(1),
-                        manager(request, context).get_resources())))
+                    manager(request, object()).get_resources()))
 
         by_path = {}
         previous_path = None
@@ -213,8 +221,8 @@ def prepare_resources(event):
             by_path.setdefault(base_path, []).append(resource)
             previous_path = base_path
 
-        for base_path in order_path:
-            resources = by_path[base_path]
+        for path in order_path:
+            resources = by_path[path]
             merged_file = tempfile.TemporaryFile()
 
             for resource in resources:
@@ -226,18 +234,17 @@ def prepare_resources(event):
 
             # generate filename
             merged_file.seek(0)
-            digest = hashlib.sha1(merged_file.read()).hexdigest()
-            name = digest
+            name = hashlib.sha1(merged_file.read()).hexdigest()
 
-            logger.error('registering: %s %s'  %(name, base_path))
+            logger.info('Registering: %s (path %s)'  %(name, path))
             resource = MergedDirectoryResource(
-                name, base_path,
-                MergedResource(merged_file, content_type))
-
-            factory = ResourceFactory(resource)
+                name, path, MergedResource(merged_file, content_type))
 
             # register factory
-            component.provideAdapter(factory, (IBrowserRequest,), Interface, name=name)
+            component.provideAdapter(
+                ResourceFactory(resource), (IBrowserRequest,), Interface, name=name)
 
+            merged_manager.add(name)
 
-
+        component.provideAdapter(
+            merged_manager, (layer, context), IProductionResourceManager, name=content_type)
