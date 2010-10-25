@@ -24,7 +24,7 @@ import slimmer
 
 lock = threading.Lock()
 SLIMMERS = {'text/css': slimmer.css_slimmer,
-            'text/javascript': slimmer.js_slimmer}
+            'application/javascript': slimmer.js_slimmer}
 
 
 class ResourceCollector(grok.MultiAdapter):
