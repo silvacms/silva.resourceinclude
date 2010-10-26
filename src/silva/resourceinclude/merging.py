@@ -37,7 +37,7 @@ def build_stack(master_level, d):
         if level[0][0].issuperset(d[0]):
             new_child = [level]
             master_level[1][position] = (d, [level])
-            for other_position, other in master_level[1][position + 1:]:
+            for other_position, other in enumerate(master_level[1][position + 1:]):
                 if other is None:
                     continue
                 if other[0][0].issuperset(d[0]):
@@ -50,14 +50,16 @@ def build_stack(master_level, d):
     else:
         master_level[1].append((d, []))
 
+
 def dump_stack(level, result):
     if level is None:
         return
     result.append(level[0])
     map(lambda l: dump_stack(l, result), level[1])
 
+
 def partitioned_stack_sort(data):
-    stack = (set(), [])
+    stack = ((set(),), [])
     for d in data:
         build_stack(stack, d)
     result = []
