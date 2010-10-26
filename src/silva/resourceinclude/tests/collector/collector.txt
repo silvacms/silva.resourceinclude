@@ -2,6 +2,13 @@ First we need to grok our test and the test resources:
 
   >>> grok('silva.resourceinclude.tests.collector.collector_fixtures')
 
+Resources are merged when the processus is starting.
+
+  >>> from zope.processlifetime import ProcessStarting
+  >>> from zope.event import notify
+
+  >>> notify(ProcessStarting())
+
 We need a test request:
 
   >>> from zope.publisher.browser import TestRequest
@@ -12,6 +19,7 @@ get one:
 
   >>> from zope import component
   >>> from silva.resourceinclude.interfaces import IResourceCollector
+
   >>> collector = component.getMultiAdapter(
   ...      (object(), request), IResourceCollector)
   >>> collector

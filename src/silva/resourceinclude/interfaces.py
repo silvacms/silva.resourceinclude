@@ -37,6 +37,9 @@ class IResourceCollector(interface.Interface):
     def get_managers():
         """Return the list of manager providing resources for this
         collector.
+
+        Manager should by sorted by order of inclusion of the
+        resources.
         """
 
     def collect():
@@ -44,18 +47,12 @@ class IResourceCollector(interface.Interface):
         collector.
         """
 
-    def sort(resources):
-        """Sort resources.
-        """
-
-    def merge(resources):
-        """Merge resources.
-        """
-
 
 class IResourceManager(interface.Interface):
     """A resource manager is a container for resource registrations.
     """
+    identifier = interface.Attribute(
+        "Unique identifier for this manager.")
     names = interface.Attribute(
         "Names of the resources that are registered with this manager.")
 
@@ -69,9 +66,15 @@ class IResourceManager(interface.Interface):
 
 
 class IDevelopmentResourceManager(IResourceManager):
-    pass
+    """Contains all resources for development, i.e. all files not
+    merged. Usally for a layer and a context, more than one
+    development resource manager is found and used.
+    """
 
 
 class IProductionResourceManager(IResourceManager):
-    pass
+    """Contains all resources for production, i.e. merged and
+    compressed files. Usually for a alyer and a context, only one
+    production manager is found.
+    """
 
