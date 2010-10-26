@@ -51,7 +51,12 @@ def list_production_resources(managers):
         ordering = []
         for (layer, context), data in layers.iteritems():
             ordering.append((set(layer), set(context), data, []))
+        for stuff in ordering:
+            logging.info('Order: %s' % sorted(map(lambda a: a.__name__, stuff[0])))
+        logging.info('Now sorting ................................')
         ordering.sort(key=operator.itemgetter(0))
+        for stuff in ordering:
+            logging.info('Order: %s' % sorted(map(lambda a: a.__name__, stuff[0])))
         for layer1, context1, data1, full_data1 in ordering:
             for layer2, context2, data2, full_data2 in ordering:
                 if layer2.issubset(layer1):
