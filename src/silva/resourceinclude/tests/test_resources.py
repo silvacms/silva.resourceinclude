@@ -7,11 +7,17 @@ import unittest
 import doctest
 
 from infrae.wsgi.testing import BrowserLayer, suite_from_package, http, Browser
+from silva.resourceinclude.zcml import clear_managers
 from zope.interface.verify import verifyObject
 import silva.resourceinclude
 
 
-layer = BrowserLayer(silva.resourceinclude, zcml_file='configure.zcml')
+class ResourceLayer(BrowserLayer):
+
+    def testTearDown(self):
+        clear_managers()
+
+layer = ResourceLayer(silva.resourceinclude, zcml_file='configure.zcml')
 globs = {'verifyObject': verifyObject,
          'getRootFolder': layer.get_application,
          'http': http,
@@ -36,5 +42,7 @@ def test_suite():
             'silva.resourceinclude.tests.directive', create_test))
     suite.addTest(suite_from_package(
             'silva.resourceinclude.tests.resource', create_test))
+    suite.addTest(suite_from_package(
+            'silva.resourceinclude.tests.merging', create_test))
     return suite
 
