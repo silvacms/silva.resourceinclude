@@ -30,6 +30,41 @@ CONTENT_TYPES = {'js': 'application/javascript',
 logger = logging.getLogger('silva.resourceinclude')
 
 
+def build_stack(master_level, d):
+    for position, level in enumerate(master_level[1]):
+        if level is None:
+            continue
+        if level[0][0].issuperset(d[0]):
+            new_child = [level]
+            master_level[1][position] = (d, [level])
+            for other_position, other in master_level[1][position + 1:]:
+                if other is None:
+                    continue
+                if other[0][0].issuperset(d[0]):
+                    new_child.append(other)
+                    master_level[1][position + other_position + 1] = None
+            break
+        if level[0][0].issubset(d[0]):
+            build_stack(level, d)
+            break
+    else:
+        master_level[1].append((d, []))
+
+def dump_stack(level, result):
+    if level is None:
+        return
+    result.append(level[0])
+    map(lambda l: dump_stack(l, result), level[1])
+
+def partitioned_stack_sort(data):
+    stack = (set(), [])
+    for d in data:
+        build_stack(stack, d)
+    result = []
+    dump_stack(stack, result)
+    return result[1:]
+
+
 def list_production_resources(managers):
     """This list for each different resource type all the couple of
     (layers, context) that can be used in production with all needed
@@ -54,7 +89,7 @@ def list_production_resources(managers):
         for stuff in ordering:
             logging.info('Order: %s' % sorted(map(lambda a: a.__name__, stuff[0])))
         logging.info('Now sorting ................................')
-        ordering.sort(key=operator.itemgetter(0))
+        ordering = partitioned_stack_sort(ordering)
         for stuff in ordering:
             logging.info('Order: %s' % sorted(map(lambda a: a.__name__, stuff[0])))
         for layer1, context1, data1, full_data1 in ordering:
