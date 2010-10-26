@@ -61,13 +61,15 @@ order of inheritence of the layers:
   ...   print "%s: (%s, %s) <%s>" % (type, layer.__name__, context.__name__, resources)
 
   >>> len(map(display, sorted(list_production_resources(MANAGERS))))
-  css: (IMyExtraLayer, Interface) <extra.css>
-  js: (IMyExtraLayer, Interface) <extra.js>
+  css: (IMyExtraLayer, IContext) <extra.css>
+  js: (IMyExtraLayer, IContext) <extra.js>
+  css: (IMyExtraSkin, IContext) <cleanup.css, resource.css, view.css, extra.css, integration.css>
+  css: (IMyExtraSkin, Interface) <cleanup.css, resource.css, view.css, integration.css>
   css: (IMyResourceLayer, Interface) <cleanup.css, resource.css>
   js: (IMyResourceLayer, Interface) <resource.js>
   css: (IMySkin, Interface) <cleanup.css, resource.css, view.css, integration.css>
   css: (IMyViewLayer, Interface) <cleanup.css, resource.css, view.css>
-  6
+  8
 
 """
 
@@ -76,6 +78,10 @@ from zope.publisher.interfaces.browser import IBrowserSkinType
 from zope.publisher.interfaces.browser import IDefaultBrowserLayer
 
 from silva.core import conf as silvaconf
+
+
+class IContext(Interface):
+    pass
 
 
 class IMyResourceLayer(IDefaultBrowserLayer):
@@ -89,6 +95,7 @@ class IMyViewLayer(IMyResourceLayer):
 
 
 class IMyExtraLayer(IDefaultBrowserLayer):
+    silvaconf.only_for(IContext)
     silvaconf.resource('extra.css')
     silvaconf.resource('extra.js')
 
@@ -98,8 +105,5 @@ class IMySkin(IMyViewLayer, IBrowserSkinType):
 
 
 class IMyExtraSkin(IMyViewLayer, IMyExtraLayer, IBrowserSkinType):
-    pass
+    silvaconf.resource('integration.css')
 
-
-class IContext(Interface):
-    pass

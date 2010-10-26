@@ -79,7 +79,7 @@ def include_directive(
     _context.action(
         discriminator = (
             'resourceInclude', layer, context, "".join(include)),
-        callable = handler,
+        callable = register_development_resources,
         args = (include, layer, context, _context.info),)
 
 
@@ -97,11 +97,11 @@ def include_layer_directive(
         _context.action(
             discriminator = (
                 'resourceInclude', layer, context, "".join(files)),
-            callable = handler,
+            callable = register_development_resources,
             args = (files, layer, context, _context.info),)
 
 
-def handler(include, layer, context, info):
+def register_development_resources(include, layer, context, info):
     """Set up includes.
     """
     global MANAGERS

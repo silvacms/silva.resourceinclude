@@ -39,7 +39,7 @@ def list_production_resources(managers):
     best_interface = lambda i1, i2: i1 if i1.extends(i2) else i2
     by_extension = {}
     managers = managers.items()
-    managers.sort(key=lambda (k, m): m.identifier, reverse=True)
+    managers.sort(key=lambda (k, m): m.identifier)
     for (layer, context, extension), manager in managers:
         resources = by_extension.setdefault(extension, {})
         managers = resources.setdefault(
