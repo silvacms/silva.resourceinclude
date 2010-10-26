@@ -175,7 +175,10 @@ def lookup_resources(managers):
                 if layer2.issubset(layer1):
                     if context2.issubset(context1):
                         full_data1.extend(data2)
-                    elif layer1 != layer2:
+                    elif data2 and layer1 != layer2:
+                        # If we are not on the same entry and that
+                        # entry is not generated, generate one
+                        # possible combinaison.
                         ordering.append((layer1, context2, [], []))
         for layer, context, data, full_data in ordering:
             yield (reduce(best_interface, layer),
@@ -240,7 +243,11 @@ def prepare_resources(event):
             existing_resource = component.queryAdapter(
                 (TestRequest(),), name=name)
             if existing_resource is None:
-                logger.info('Registering: %s (path %s)'  %(name, path))
+                logger.debug('Registering merging of %s into %s (path %s)'  % (
+                        ', '.join(map(lambda r: '/'.join(r.get_relative_path()),
+                                      resources)),
+                        name,
+                        path))
                 resource = MergedDirectoryResource(
                     name, path, MergedResource(merged_file, content_type))
 
