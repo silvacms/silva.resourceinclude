@@ -30,40 +30,110 @@ CONTENT_TYPES = {'js': 'application/javascript',
 logger = logging.getLogger('silva.resourceinclude')
 
 
-def build_stack(master_level, d):
-    for position, level in enumerate(master_level[1]):
-        if level is None:
-            continue
-        if level[0][0].issuperset(d[0]):
-            new_child = [level]
-            master_level[1][position] = (d, [level])
-            for other_position, other in enumerate(master_level[1][position + 1:]):
-                if other is None:
-                    continue
-                if other[0][0].issuperset(d[0]):
-                    new_child.append(other)
-                    master_level[1][position + other_position + 1] = None
-            break
-        if level[0][0].issubset(d[0]):
-            build_stack(level, d)
-            break
-    else:
-        master_level[1].append((d, []))
+class Node(object):
+    parents = []
+    children = []
+    data = None
+    visited = False
+
+    def __init__(self, data, parents, children):
+        self.data = data
+        self.parents = parents
+        self.children = children
+
+    def add(self, d):
+        """Create a new node containing d somewhere as a relative child of
+        node.
+        """
+        for position, child in enumerate(self.children):
+            if child is None:
+                continue
+            if child.data[0].issuperset(d[0]):
+                # We are a subset of the current node, but a super set of
+                # one of its child. So we need to be the new parent of the
+                # child, and the child of the current node.
+                node_child_list = [child]
+                new_node = self.__class__(d, [self], node_child_list)
+                self.children[position] = new_node
+                for other_position, other in enumerate(self.children[position + 1:]):
+                    # We might need to move other children as child of our
+                    # new node.
+                    if other is None:
+                        continue
+                    if other.data[0].issuperset(d[0]):
+                        node_child_list.append(other)
+                        self.children[position + other_position + 1] = None
+                return new_node
+            if child.data[0].issubset(d[0]):
+                # We are a subset of that node. Go add had ourselves as
+                # child of this one.
+                new_node = child.add(d)
+                # But we might be as well a subset of the other nodes, in
+                # that case we need to be added as parents as well.
+                for other_position, other in enumerate(self.children[position + 1:]):
+                    if other is None:
+                        continue
+                    if other.data[0].issubset(d[0]):
+                        new_node.parents.append(other)
+                return new_node
+        else:
+            # We are not connected to any other children at this
+            # level, so we get adopted.
+            new_node = self.__class__(d, [self], [])
+            self.children.append(new_node)
+            # However, we can still be parents of other children childrens.
+            # XXX This case is not handled here.
+            return new_node
+
+    def dump(self, result):
+        """Do a left-hand run through the graph to dump its content in
+        order.
+        """
+        self.visitor(lambda n: result.append(n.data))
+
+    def visitor(self, action):
+        """Visit nodes in order and execute the given action on them.
+        """
+        if self.visited:
+            return
+        self.visited = True
+
+        def visit(nodes):
+            for node in nodes:
+                if node is not None:
+                    node.visitor(action)
+
+        visit(self.parents)
+        action(self)
+        visit(self.children)
+
+    def reset(self):
+        """Reset the visit marker.
+        """
+        if not self.visited:
+            return
+        self.visited = False
+
+        def reset(nodes):
+            for node in nodes:
+                if node is not None:
+                    node.reset()
+
+        reset(self.parents)
+        reset(self.children)
 
 
-def dump_stack(level, result):
-    if level is None:
-        return
-    result.append(level[0])
-    map(lambda l: dump_stack(l, result), level[1])
+def sort_tuple(data):
+    """Build a set of directed graphs based on the inclusion relation
+    of the first set of each element of data in order to sort them.
 
-
-def partitioned_stack_sort(data):
-    stack = ((set(),), [])
+    As the graph represent Python class, we cannot get cycles.
+    """
+    root = Node((set(),), [], [])
     for d in data:
-        build_stack(stack, d)
+        root.add(d)
     result = []
-    dump_stack(stack, result)
+    root.dump(result)
     return result[1:]
 
 
@@ -88,7 +158,7 @@ def list_production_resources(managers):
         ordering = []
         for (layer, context), data in layers.iteritems():
             ordering.append((set(layer), set(context), data, []))
-        ordering = partitioned_stack_sort(ordering)
+        ordering = sort_tuple(ordering)
         for layer1, context1, data1, full_data1 in ordering:
             for layer2, context2, data2, full_data2 in ordering:
                 if layer2.issubset(layer1):

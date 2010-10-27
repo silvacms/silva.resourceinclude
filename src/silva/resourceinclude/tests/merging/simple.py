@@ -6,21 +6,21 @@
 You can list layers and skins for a layer and skin:
 
   >>> from silva.resourceinclude.utils import list_base_layers
-  >>> from silva.resourceinclude.tests.merging.listing import (
+  >>> from silva.resourceinclude.tests.merging.simple import (
   ...     IMyExtraSkin, IMyExtraLayer, IMyViewLayer, IContext, Interface)
 
   >>> list(list_base_layers(IMyExtraSkin))
-  [<InterfaceClass silva.resourceinclude.tests.merging.listing.IMyExtraSkin>,
-   <InterfaceClass silva.resourceinclude.tests.merging.listing.IMyViewLayer>,
-   <InterfaceClass silva.resourceinclude.tests.merging.listing.IMyResourceLayer>,
-   <InterfaceClass silva.resourceinclude.tests.merging.listing.IMyExtraLayer>]
+  [<InterfaceClass silva.resourceinclude.tests.merging.simple.IMyExtraSkin>,
+   <InterfaceClass silva.resourceinclude.tests.merging.simple.IMyViewLayer>,
+   <InterfaceClass silva.resourceinclude.tests.merging.simple.IMyResourceLayer>,
+   <InterfaceClass silva.resourceinclude.tests.merging.simple.IMyExtraLayer>]
 
   >>> list(list_base_layers(IMyExtraLayer))
-  [<InterfaceClass silva.resourceinclude.tests.merging.listing.IMyExtraLayer>]
+  [<InterfaceClass silva.resourceinclude.tests.merging.simple.IMyExtraLayer>]
 
   >>> list(list_base_layers(IMyViewLayer))
-  [<InterfaceClass silva.resourceinclude.tests.merging.listing.IMyViewLayer>,
-   <InterfaceClass silva.resourceinclude.tests.merging.listing.IMyResourceLayer>]
+  [<InterfaceClass silva.resourceinclude.tests.merging.simple.IMyViewLayer>,
+   <InterfaceClass silva.resourceinclude.tests.merging.simple.IMyResourceLayer>]
 
   >>> list(list_base_layers(IContext))
   []
@@ -33,7 +33,7 @@ And from an interface its parents:
   >>> from silva.resourceinclude.utils import list_base_interfaces
 
   >>> list(list_base_interfaces(IContext))
-  [<InterfaceClass silva.resourceinclude.tests.merging.listing.IContext>,
+  [<InterfaceClass silva.resourceinclude.tests.merging.simple.IContext>,
    <InterfaceClass zope.interface.Interface>]
 
   >>> list(list_base_interfaces(Interface))
@@ -47,29 +47,28 @@ Now Grok the examples, and compute all production bundle we can
 make. Resources should appear in order they are registered, plus the
 order of inheritence of the layers:
 
-  >>> grok('silva.resourceinclude.tests.merging.listing')
+  >>> grok('silva.resourceinclude.tests.merging.simple')
   >>> from silva.resourceinclude.merging import list_production_resources
   >>> from silva.resourceinclude.zcml import MANAGERS
-  >>> import operator
-  >>> import os.path
 
-  >>> def display((layer, context, managers, type),):
-  ...   resources = ', '.join(map(lambda p: os.path.basename(p),
-  ...                             reduce(operator.add,
-  ...                                    map(operator.attrgetter('names'),
-  ...                                        managers))))
-  ...   print "%s: (%s, %s) <%s>" % (type, layer.__name__, context.__name__, resources)
+  >>> from silva.resourceinclude.tests.merging import (
+  ...    display_resources, filter_resources)
 
-  >>> len(map(display, sorted(list_production_resources(MANAGERS))))
+  >>> resources = list(list_production_resources(MANAGERS))
+  >>> len(map(display_resources, filter_resources(resources, 'css')))
   css: (IMyExtraLayer, IContext) <extra.css>
-  js: (IMyExtraLayer, IContext) <extra.js>
   css: (IMyExtraSkin, IContext) <cleanup.css, resource.css, view.css, extra.css, integration.css>
   css: (IMyExtraSkin, Interface) <cleanup.css, resource.css, view.css, integration.css>
   css: (IMyResourceLayer, Interface) <cleanup.css, resource.css>
-  js: (IMyResourceLayer, Interface) <resource.js>
   css: (IMySkin, Interface) <cleanup.css, resource.css, view.css, integration.css>
   css: (IMyViewLayer, Interface) <cleanup.css, resource.css, view.css>
-  8
+  6
+
+  >>> len(map(display_resources, filter_resources(resources, 'js')))
+  js: (IMyExtraLayer, IContext) <extra.js>
+  js: (IMyResourceLayer, Interface) <resource.js>
+  2
+
 
 """
 
