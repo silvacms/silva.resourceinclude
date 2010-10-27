@@ -40,25 +40,28 @@ Now let's get a request which use our test layer:
   >>> collector = component.getMultiAdapter(
   ...      (object(), request), IResourceCollector)
 
-There is some resources now:
+There are some resources now, one for CSS, one for JS:
 
   >>> merged_resources = collector.collect()
   >>> merged_resources
   (<silva.resourceinclude.resource.MergedDirectoryResourceView object at ...>,
    <silva.resourceinclude.resource.MergedDirectoryResourceView object at ...>)
 
-  >>> merged_resource = merged_resources[0]
+  >>> map(lambda r: r.context.content_type, merged_resources)
+  ['application/javascript', 'text/css']
+
+  >>> css_resource = merged_resources[1]
 
 We can access to files in static the same way before:
 
-  >>> images_resource = merged_resource.publishTraverse(request, 'images')
+  >>> images_resource = css_resource.publishTraverse(request, 'images')
   >>> images_resource
   <silva.resourceinclude.resource.ResourceView object at ...>
 
 
 If files doesn't exists, however we still have an error:
 
-  >>> merged_resource.publishTraverse(request, 'i don\'t know you')
+  >>> css_resource.publishTraverse(request, 'i don\'t know you')
   Traceback (most recent call last):
      ...
   NotFound: Object: ... name: "i don't know you"
