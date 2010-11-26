@@ -14,7 +14,7 @@ from silva.resourceinclude.interfaces import IResourceCollector
 
 
 def local_template(filename):
-    return os.path.join(os.path.dirname(__file__), filename, 'templates')
+    return os.path.join(os.path.dirname(__file__), 'templates', filename)
 
 
 def interfaces_identifiers(obj):
