@@ -13,8 +13,8 @@ from silva.core.views import views as silvaviews
 from silva.resourceinclude.interfaces import IResourceCollector
 
 
-def local_file(filename):
-    return os.path.join(os.path.dirname(__file__), filename)
+def local_template(filename):
+    return os.path.join(os.path.dirname(__file__), filename, 'templates')
 
 
 def interfaces_identifiers(obj):
@@ -31,7 +31,7 @@ class ResourceIncludeProvider(silvaviews.ContentProvider):
     grok.context(interface.Interface)
     grok.name('resources')
 
-    template = PageTemplateFile(local_file("provider.pt"))
+    template = PageTemplateFile(local_template("provider.pt"))
 
     @cached_method(region='shared', key=cache_key)
     def render(self):
