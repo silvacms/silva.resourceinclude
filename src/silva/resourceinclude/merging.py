@@ -25,21 +25,34 @@ from silva.resourceinclude.resource import (
 
 
 SLIMMERS = {'text/css': cssmin.cssmin}
-CONTENT_TYPES = {'js': 'application/javascript',
-                 'css': 'text/css'}
+CONTENT_TYPES = {'js': 'application/javascript', 'css': 'text/css'}
+MERGED_BY_PATHS = {'js': False, 'css': True}
 logger = logging.getLogger('silva.resourceinclude')
 
 
+ID = 1
+
 class Node(object):
+    """Sorting tree.
+
+    Add algorithm might create None nodes. Those are to be ignored.
+    """
     parents = []
     children = []
     data = None
     visited = False
 
     def __init__(self, data, parents, children):
+        global ID
+        self.nid = ID
+        ID += 1
         self.data = data
         self.parents = parents
         self.children = children
+
+    def key(self):
+        # Sorting key is the first data element.
+        return self.data[0]
 
     def add(self, d):
         """Create a new node containing d somewhere as a relative child of
@@ -48,23 +61,25 @@ class Node(object):
         for position, child in enumerate(self.children):
             if child is None:
                 continue
-            if child.data[0].issuperset(d[0]):
+            if child.key().issuperset(d[0]):
                 # We are a subset of the current node, but a super set of
                 # one of its child. So we need to be the new parent of the
                 # child, and the child of the current node.
-                node_child_list = [child]
-                new_node = self.__class__(d, [self], node_child_list)
+                new_child_list = [child]
+                new_node = self.__class__(d, [self], new_child_list)
                 self.children[position] = new_node
                 for other_position, other in enumerate(self.children[position + 1:]):
-                    # We might need to move other children as child of our
-                    # new node.
                     if other is None:
                         continue
-                    if other.data[0].issuperset(d[0]):
-                        node_child_list.append(other)
+                    if other.key().issuperset(d[0]):
+                        new_child_list.append(other)
                         self.children[position + other_position + 1] = None
+                for new_child in new_child_list:
+                    # Update parent list in child list of new_node
+                    parent_position = new_child.parents.index(self)
+                    new_child.parents[parent_position] = new_node
                 return new_node
-            if child.data[0].issubset(d[0]):
+            if child.key().issubset(d[0]):
                 # We are a subset of that node. Go add had ourselves as
                 # child of this one.
                 new_node = child.add(d)
@@ -73,16 +88,33 @@ class Node(object):
                 for other_position, other in enumerate(self.children[position + 1:]):
                     if other is None:
                         continue
-                    if other.data[0].issubset(d[0]):
+                    # XXX I don't know
+                    if other.key().issubset(d[0]):
+                        # XXX order, order, order.
                         new_node.parents.append(other)
                 return new_node
         else:
             # We are not connected to any other children at this
             # level, so we get adopted.
             new_node = self.__class__(d, [self], [])
-            self.children.append(new_node)
+
             # However, we can still be parents of other children childrens.
-            # XXX This case is not handled here.
+            for other in self.children:
+                if other is None:
+                    continue
+
+                def parentify(node):
+                    if node.key().issuperset(d[0]):
+                        # Extra check
+                        if not new_node in node.parents:
+                            node.parents.append(new_node)
+                            new_node.children.append(node)
+                            node.visitor(lambda n: None, children_only=True)
+
+                other.visitor(parentify)
+
+            self.children.append(new_node)
+            self.reset()
             return new_node
 
     def dump(self, result):
@@ -91,7 +123,7 @@ class Node(object):
         """
         self.visitor(lambda n: result.append(n.data))
 
-    def visitor(self, action):
+    def visitor(self, action, children_only=False):
         """Visit nodes in order and execute the given action on them.
         """
         if self.visited:
@@ -101,9 +133,10 @@ class Node(object):
         def visit(nodes):
             for node in nodes:
                 if node is not None:
-                    node.visitor(action)
+                    node.visitor(action, children_only=children_only)
 
-        visit(self.parents)
+        if not children_only:
+            visit(self.parents)
         action(self)
         visit(self.children)
 
@@ -121,6 +154,20 @@ class Node(object):
 
         reset(self.parents)
         reset(self.children)
+
+    def dot(self):
+        nodes = []
+        rels = []
+
+        def dot_visitor(node):
+            nodes.append('%s [label="%r"];' % (node.nid, node.key()))
+            for child in node.children:
+                if child is not None:
+                    rels.append('%s -> %s;' % (node.nid, child.nid))
+
+        self.visitor(dot_visitor)
+        return 'digraph resources {\n' + '\n'.join(nodes + rels) + '}'
+
 
 
 def sort_tuple(data):
@@ -157,19 +204,30 @@ def list_production_resources(managers):
     for extension, layers in by_extension.iteritems():
         ordering = []
         for (layer, context), data in layers.iteritems():
-            ordering.append((set(layer), set(context), data, []))
+            ordering.append((set(layer), set(context), data, [], True))
         ordering = sort_tuple(ordering)
-        for layer1, context1, data1, full_data1 in ordering:
-            for layer2, context2, data2, full_data2 in ordering:
+        generated = []
+
+        def generate(layer, context):
+            info = (layer, context)
+            if info not in generated:
+                generated.append(info)
+                ordering.append((layer, context, [], [], False))
+
+        for layer1, context1, data1, full_data1, original1 in ordering:
+            for layer2, context2, data2, full_data2, original2 in ordering:
                 if layer2.issubset(layer1):
-                    if context2.issubset(context1):
-                        full_data1.extend(data2)
-                    elif data2 and layer1 != layer2:
-                        # If we are not on the same entry and that
-                        # entry is not generated, generate one
-                        # possible combinaison.
-                        ordering.append((layer1, context2, [], []))
-        for layer, context, data, full_data in ordering:
+                    if data2:
+                        if context2.issubset(context1):
+                            full_data1.extend(data2)
+                            if context1 != context2 and original1:
+                                generate(layer1, context2)
+                        elif layer1 != layer2 and original2:
+                            # If we are not on the same entry and that
+                            # entry is not generated, generate one
+                            # possible combinaison
+                            generate(layer1, context2)
+        for layer, context, data, full_data, original in ordering:
             yield (reduce(best_interface, layer),
                    reduce(best_interface, context),
                    full_data,
@@ -238,20 +296,24 @@ def register_production_resources(development_managers):
                     lambda r: r.context.content_type == content_type,
                     manager(request, object()).get_resources()))
 
-        by_path = {}
-        order_path = []
-        previous_path = None
-        for resource in resources:
-            base_path = os.path.sep.join(
-                resource.context.path.split(os.path.sep)[:-1])
-            if previous_path != base_path:
-                order_path.append(base_path)
-            by_path.setdefault(base_path, []).append(resource)
-            previous_path = base_path
-
-        for path in order_path:
+        if not MERGED_BY_PATHS[extension]:
             merged_manager.add(
-                merge_and_register_resources(path, by_path[path], content_type))
+                merge_and_register_resources('/', resources, content_type))
+        else:
+            by_path = {}
+            order_path = []
+            previous_path = None
+            for resource in resources:
+                base_path = os.path.sep.join(
+                    resource.context.path.split(os.path.sep)[:-1])
+                if previous_path != base_path:
+                    order_path.append(base_path)
+                by_path.setdefault(base_path, []).append(resource)
+                previous_path = base_path
+
+            for path in order_path:
+                merged_manager.add(
+                    merge_and_register_resources(path, by_path[path], content_type))
 
         component.provideAdapter(
             merged_manager,
