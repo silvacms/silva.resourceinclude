@@ -9,6 +9,8 @@ version = '2.2.1dev'
 
 tests_require = [
     'infrae.wsgi [test]',
+    'infrae.testbrowser',
+    'zope.event',
     ]
 
 setup(name='silva.resourceinclude',
@@ -36,19 +38,21 @@ setup(name='silva.resourceinclude',
       zip_safe=False,
       install_requires=[
           'Chameleon',
+          'cssmin',
           'five.grok',
           'martian',
           'setuptools',
           'silva.core.cache',
           'silva.core.conf',
           'silva.core.views',
-          'cssmin',
           'zope.component',
           'zope.configuration',
           'zope.datetime',
           'zope.interface',
+          'zope.processlifetime',
           'zope.publisher',
           'zope.schema',
+          'zope.testing',
           'zope.traversing',
           ],
       tests_require = tests_require,

@@ -6,7 +6,8 @@
 import unittest
 import doctest
 
-from infrae.wsgi.testing import BrowserLayer, suite_from_package, http, Browser
+from infrae.testbrowser.browser import Browser
+from infrae.wsgi.testing import BrowserLayer, suite_from_package
 from silva.resourceinclude.zcml import clear_managers
 from zope.interface.verify import verifyObject
 import silva.resourceinclude
@@ -14,14 +15,18 @@ import silva.resourceinclude
 
 class ResourceLayer(BrowserLayer):
 
+    def get_browser(self):
+        return Browser(self._test_wsgi_application)
+
     def testTearDown(self):
         clear_managers()
+        super(ResourceLayer, self).testTearDown()
+
 
 layer = ResourceLayer(silva.resourceinclude, zcml_file='configure.zcml')
 globs = {'verifyObject': verifyObject,
          'getRootFolder': layer.get_application,
-         'http': http,
-         'Browser': Browser,
+         'Browser': layer.get_browser,
          'grok': layer.grok,}
 
 

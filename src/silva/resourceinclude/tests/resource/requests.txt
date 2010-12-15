@@ -8,21 +8,20 @@ HEAD requests
 
 Now, we should be able to do request on our resources, here a CSS file:
 
+  >>> browser = Browser()
   >>> path = '/++resource++silva.resourceinclude.tests.resource.requests_fixture'
-  >>> response = http('HEAD %s/style.css HTTP/1.1' % path, parsed=True)
-  >>> response.getStatus()
+  >>> browser.open(path + '/style.css', method='HEAD')
   200
-  >>> headers = response.getHeaders()
-  >>> headers.keys()
-  ['Last-Modified', 'Content-Length', 'Expires',
-   'Content-Type', 'Cache-Control']
-  >>> headers['Content-Type']
+  >>> browser.headers.keys()
+  ['last-modified', 'content-length', 'expires',
+   'content-type', 'cache-control']
+  >>> browser.headers['Content-Type']
   'text/css'
-  >>> headers['Content-Length']
+  >>> browser.headers['Content-Length']
   '26'
-  >>> headers['Cache-Control']
+  >>> browser.headers['Cache-Control']
   'public,max-age=31536000'
-  >>> len(response.getBody())
+  >>> len(browser.contents)
   0
 
 Image
@@ -30,20 +29,18 @@ Image
 
 On an image for instance:
 
-  >>> response = http('HEAD %s/images/img01.gif HTTP/1.1' % path, parsed=True)
-  >>> response.getStatus()
+  >>> browser.open(path + '/images/img01.gif', method='HEAD')
   200
-  >>> headers = response.getHeaders()
-  >>> headers.keys()
-  ['Last-Modified', 'Content-Length', 'Expires',
-   'Content-Type', 'Cache-Control']
-  >>> headers['Content-Type']
+  >>> browser.headers.keys()
+  ['last-modified', 'content-length', 'expires',
+   'content-type', 'cache-control']
+  >>> browser.headers['Content-Type']
   'image/gif'
-  >>> headers['Content-Length']
+  >>> browser.headers['Content-Length']
   '194'
-  >>> headers['Cache-Control']
+  >>> browser.headers['Cache-Control']
   'public,max-age=31536000'
-  >>> len(response.getBody())
+  >>> len(browser.contents)
   0
 
 Container
@@ -51,20 +48,18 @@ Container
 
 On a resource directory:
 
-  >>> response = http('HEAD %s/images HTTP/1.1' % path, parsed=True)
-  >>> response.getStatus()
+  >>> browser.open(path + '/images', method='HEAD')
   204
-  >>> headers = response.getHeaders()
-  >>> headers.keys()
-  ['Last-Modified', 'Content-Length', 'Expires',
-   'Content-Type', 'Cache-Control']
-  >>> headers['Content-Type']
+  >>> browser.headers.keys()
+  ['last-modified', 'content-length', 'expires',
+   'content-type', 'cache-control']
+  >>> browser.headers['Content-Type']
   'text/plain'
-  >>> headers['Content-Length']
+  >>> browser.headers['Content-Length']
   '0'
-  >>> headers['Cache-Control']
+  >>> browser.headers['Cache-Control']
   'public,max-age=31536000'
-  >>> len(response.getBody())
+  >>> len(browser.contents)
   0
 
 GET requests
@@ -72,20 +67,18 @@ GET requests
 
 Now, we should be able to do request on our resources, here a CSS file:
 
-  >>> response = http('GET %s/style.css HTTP/1.1' % path, parsed=True)
-  >>> response.getStatus()
+  >>> browser.open(path + '/style.css')
   200
-  >>> headers = response.getHeaders()
-  >>> headers.keys()
-  ['Last-Modified', 'Content-Length', 'Expires',
-   'Content-Type', 'Cache-Control']
-  >>> headers['Content-Type']
+  >>> browser.headers.keys()
+  ['last-modified', 'content-length', 'expires',
+   'content-type', 'cache-control']
+  >>> browser.headers['Content-Type']
   'text/css'
-  >>> headers['Content-Length']
+  >>> browser.headers['Content-Length']
   '26'
-  >>> headers['Cache-Control']
+  >>> browser.headers['Cache-Control']
   'public,max-age=31536000'
-  >>> len(response.getBody())
+  >>> len(browser.contents)
   26
 
 Image
@@ -93,20 +86,18 @@ Image
 
 On an image for instance:
 
-  >>> response = http('GET %s/images/img01.gif HTTP/1.1' % path, parsed=True)
-  >>> response.getStatus()
+  >>> browser.open(path + '/images/img01.gif')
   200
-  >>> headers = response.getHeaders()
-  >>> headers.keys()
-  ['Last-Modified', 'Content-Length', 'Expires',
-   'Content-Type', 'Cache-Control']
-  >>> headers['Content-Type']
+  >>> browser.headers.keys()
+  ['last-modified', 'content-length', 'expires',
+   'content-type', 'cache-control']
+  >>> browser.headers['Content-Type']
   'image/gif'
-  >>> headers['Content-Length']
+  >>> browser.headers['Content-Length']
   '194'
-  >>> headers['Cache-Control']
+  >>> browser.headers['Cache-Control']
   'public,max-age=31536000'
-  >>> len(response.getBody())
+  >>> len(browser.contents)
   194
 
 Container
@@ -114,18 +105,16 @@ Container
 
 On a resource directory (you see nothing actually on the directory):
 
-  >>> response = http('GET %s/images HTTP/1.1' % path, parsed=True)
-  >>> response.getStatus()
+  >>> browser.open(path + '/images')
   204
-  >>> headers = response.getHeaders()
-  >>> headers.keys()
-  ['Last-Modified', 'Content-Length', 'Expires',
-   'Content-Type', 'Cache-Control']
-  >>> headers['Content-Type']
+  >>> browser.headers.keys()
+  ['last-modified', 'content-length', 'expires',
+   'content-type', 'cache-control']
+  >>> browser.headers['Content-Type']
   'text/plain'
-  >>> headers['Content-Length']
+  >>> browser.headers['Content-Length']
   '0'
-  >>> headers['Cache-Control']
+  >>> browser.headers['Cache-Control']
   'public,max-age=31536000'
-  >>> len(response.getBody())
+  >>> len(browser.contents)
   0
