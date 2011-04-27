@@ -80,7 +80,7 @@ class ResourceView(BrowserPage, grok.MultiAdapter):
         """Compute resource URL.
         """
         virtual_site = component.getAdapter(self.request, IVirtualSite)
-        return u"%s/++resource++%s" % (
+        return u"%s++resource++%s" % (
             virtual_site.get_root_url(), u'/'.join(self.get_relative_path()))
 
     def __set_http_headers(self):
