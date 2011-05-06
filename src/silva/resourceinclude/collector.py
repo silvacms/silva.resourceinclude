@@ -30,9 +30,12 @@ class ResourceCollector(grok.MultiAdapter):
         resources.sort(key=lambda resource: resource.context.content_type)
 
     def get_managers(self):
-        interface = IProductionResourceManager
-        if Globals.DevelopmentMode:
-            interface = IDevelopmentResourceManager
+        #the IProductionResourceManager does not work, so commenting it out
+        #interface = IProductionResourceManager
+        #if Globals.DevelopmentMode:
+        #the development one does, and is just as good as not using resource
+        # collecting, so use it always
+        interface = IDevelopmentResourceManager
         managers = map(
             operator.itemgetter(1),
             component.getAdapters((self.request, self.context), interface))
