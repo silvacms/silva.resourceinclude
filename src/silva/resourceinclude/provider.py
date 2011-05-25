@@ -21,7 +21,7 @@ def interfaces_identifiers(obj):
     return tuple(map(lambda i: i.__identifier__, obj.__provides__.interfaces()))
 
 
-def cache_key(obj):
+def cache_key(obj, func):
     return interfaces_identifiers(obj.request) + \
         interfaces_identifiers(obj.context) + \
         (obj.request['HTTP_HOST'],)
