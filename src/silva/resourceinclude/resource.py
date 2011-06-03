@@ -130,6 +130,8 @@ class FileResource(object):
         self.filename = name
         self.path = path
         self.content_type = mimetypes.guess_type(path)[0]
+        if self.content_type is None:
+            self.content_type = 'application/octet-stream'
         with open(self.path, 'rb') as resource:
             self.content_length = file_length(resource)
         self.lmt = os.stat(path)[8]
