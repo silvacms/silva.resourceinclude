@@ -8,6 +8,7 @@ from silva.resourceinclude.interfaces import IResourceManager
 
 import Acquisition
 
+
 class ResourceManager(Acquisition.Implicit):
 
     interface.implements(IResourceManager)
