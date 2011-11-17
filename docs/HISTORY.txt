@@ -1,10 +1,12 @@
 Changes
 =======
 
-1.1 (unreleased)
+1.1 (2011-11-17)
 ----------------
 
-* ...
+* Backport from the 2.0 branch part of the code to serve directly
+  resources, without using Zope facilities, in order to have a better
+  caching support (better HTTP headers, and working HEAD requests).
 
 1.0.1 (2010-07-28)
 ------------------

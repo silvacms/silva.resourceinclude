@@ -114,7 +114,6 @@ class ResourceCollector(Acquisition.Implicit):
                         (self.request,), name=name)
 
                     if existing_resource is None:
-                        print 'register', name
                         resource = MergedDirectoryResource(
                             name,
                             base_path,

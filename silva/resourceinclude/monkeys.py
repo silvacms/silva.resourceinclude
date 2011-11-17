@@ -14,7 +14,6 @@ def _register_resource(config, resource_path, name, layer):
     adapts = (layer,)
     provides = interface.Interface
 
-    print 'boot', name, resource_factory
     config.action(
         discriminator=('adapter', adapts, provides, name),
         callable=component.provideAdapter,

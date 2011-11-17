@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.1dev'
+version = '1.1'
 
 setup(name='silva.resourceinclude',
       version=version,
@@ -31,14 +31,18 @@ setup(name='silva.resourceinclude',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          'setuptools',
-          'martian',
-          'silva.core.views',
-          'silva.core.conf',
-          'zope.app.publisher',
-          'zope.app.cache',
-          'zope.contentprovider',
           'chameleon.zpt',
+          'five.grok',
+          'martian',
           'plone.memoize',
+          'setuptools',
+          'silva.core.conf',
+          'silva.core.views',
+          'zope.component',
+          'zope.contentprovider',
+          'zope.interface',
+          'zope.publisher',
+          'zope.schema',
+          'zope.traversing',
           ],
       )
