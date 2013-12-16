@@ -15,7 +15,7 @@ tests_require = [
 
 setup(name='silva.resourceinclude',
       version=version,
-      description="z3c.resourceinclude like support for Silva",
+      description="z3c.resourceinclude like support for Silva 2",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       classifiers=[
@@ -29,7 +29,7 @@ setup(name='silva.resourceinclude',
       keywords='zope2 resourceinclude z3c',
       author='Sylvain Viollon',
       author_email='info@infrae.com',
-      url='http://svn.infrae.com/silva.resourceinclude/trunk',
+      url='https://github.com/silvacms/silva.resourceinclude',
       license='ZPL',
       package_dir={'': 'src'},
       packages=find_packages('src'),

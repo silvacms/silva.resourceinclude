@@ -23,7 +23,7 @@ Changes
 
 * Support for the directive ``only_for`` have been added. It  is the
   equivalent of the ``context`` option used with ZCML directives.
-  
+
 
 2.1 (2010-10-07)
 ----------------
@@ -80,4 +80,3 @@ Changes
 ------------------
 
 * Initial release.
-
